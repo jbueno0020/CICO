@@ -499,30 +499,38 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
 .card-grid-wrap {
   flex: 1;
   overflow: hidden;
-  padding: 0 14px;
+  margin: 6px 14px 6px;
+  border: 2px solid #C4D4EC;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 .behavior-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  flex: 1;
+  height: 100%;
 }
 
 /* Header row */
 .behavior-table thead tr {
   background: var(--blue);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 .behavior-table thead th {
   color: #fff;
   font-size: 11px;
   font-weight: 700;
-  padding: 6px 6px;
+  padding: 7px 6px;
   text-align: center;
-  border-right: 1px solid rgba(255,255,255,.18);
+  border-right: 1px solid rgba(255,255,255,.22);
   vertical-align: middle;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 .behavior-table thead th:first-child {
   text-align: left;
@@ -533,7 +541,7 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
 .behavior-table thead th:last-child {
   border-right: none;
   font-size: 10.5px;
-  width: 5%;
+  width: 6%;
 }
 
 /* Period header — contenteditable */
@@ -549,60 +557,70 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
 .th-period:focus  { background: rgba(255,255,255,.2); outline: none; }
 .th-period:empty::before { content: attr(data-ph); opacity: .5; pointer-events: none; }
 
-/* Scale subheader */
+/* Scale subheader — single compact row */
 .scale-subrow td {
   background: #EEF4FF;
   font-size: 9.5px;
   font-weight: 700;
   color: var(--blue);
-  text-align: center;
-  padding: 3px 4px;
-  border-right: 1px solid #D0E2FF;
+  padding: 4px 12px;
   border-bottom: 1.5px solid #C3D4F5;
-  letter-spacing: .2px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
-.scale-subrow td:first-child { padding-left: 12px; }
-.scale-subrow td:last-child  { border-right: none; }
+.scale-subrow td:first-child {
+  color: var(--muted);
+  font-weight: 700;
+  border-right: 1px solid #C3D4F5;
+  text-transform: uppercase;
+  font-size: 9px;
+  letter-spacing: .4px;
+}
+.scale-subrow td.scale-legend { text-align: center; }
 
 /* Behavior rows */
+.beh-row { height: 1px; /* browser distributes evenly when table has height:100% */ }
 .beh-row td {
-  padding: 0 4px;
-  border-right: 1px solid #E5E7EB;
-  border-bottom: 1px solid #EEF1F6;
+  padding: 0 6px;
+  border-right: 1px solid #D8E4F2;
+  border-bottom: 1px solid #D8E4F2;
   vertical-align: middle;
   font-size: 11px;
+  height: inherit;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
-.beh-row:nth-child(odd)  td { background: #F7FAFF; }
+.beh-row:nth-child(odd)  td { background: #F4F8FF; }
 .beh-row:nth-child(even) td { background: #fff; }
-.beh-row:hover td { background: #EEF5FF !important; }
+.beh-row:hover td { background: #EBF2FF !important; }
 .beh-row td:last-child { border-right: none; }
 .beh-row td.beh-name-cell {
-  padding: 5px 8px 5px 12px;
+  padding: 6px 8px 6px 12px;
   font-weight: 600;
   font-size: 11px;
   width: 28%;
   position: relative;
   cursor: text;
+  border-right: 2px solid #C4D4EC;
 }
-.beh-row td.score-cell {
-  text-align: center;
-  height: 32px;
-}
+.beh-row td.score-cell { text-align: center; }
 .beh-row td.total-cell {
   text-align: center;
   font-weight: 700;
   font-size: 11px;
-  color: var(--blue);
+  color: #3A86FF;
+  border-left: 2px solid #C4D4EC;
+  border-right: none;
 }
 
 /* Contenteditable behavior name */
 .ce-beh {
   outline: none;
   display: block;
-  line-height: 1.3;
+  line-height: 1.35;
   min-width: 20px;
   border-radius: 3px;
-  padding: 2px 24px 2px 2px; /* room for delete btn */
+  padding: 2px 24px 2px 2px;
   transition: background .1s;
 }
 .ce-beh:hover  { background: rgba(58,134,255,.06); }
@@ -636,22 +654,34 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
 
 /* Max row footer */
 .max-row td {
-  background: #EEF4FF;
-  padding: 4px 6px;
+  background: #DDE8F7;
+  padding: 5px 6px;
   font-size: 10.5px;
-  font-weight: 700;
-  color: var(--blue);
+  font-weight: 800;
+  color: #1D4E8F;
   text-align: center;
-  border-top: 2px solid #C3D4F5;
-  border-right: 1px solid #D0E2FF;
+  border-top: 2px solid #B0C6E4;
+  border-right: 1px solid #C4D4EC;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
-.max-row td:first-child { text-align: left; padding-left: 12px; }
-.max-row td:last-child  { border-right: none; }
+.max-row td:first-child {
+  text-align: left;
+  padding-left: 12px;
+  border-right: 2px solid #B0C6E4;
+}
+.max-row td:last-child {
+  border-right: none;
+  border-left: 2px solid #B0C6E4;
+  font-size: 12px;
+  color: #1D4E8F;
+}
 
 /* Add behavior inline button */
 .add-beh-row td {
   padding: 4px 12px;
-  border-top: 1.5px dashed #D0E0FF;
+  border-top: 1.5px dashed #C4D4EC;
+  background: #FAFBFF;
 }
 .add-beh-inline {
   background: none;
@@ -702,21 +732,81 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
 .co-line.med { width: 90px; }
 .co-line.lg  { width: 130px; }
 
+/* ─── Force color print on colored elements ─────── */
+.card-top,
+.card-goal-bar,
+.card-checkin-bar,
+.card-checkout-bar,
+.behavior-table thead tr,
+.behavior-table thead th,
+.scale-subrow td,
+.beh-row:nth-child(odd) td,
+.max-row td {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
 /* ─── Print ──────────────────────────────────────── */
 @media print {
   @page { size: 11in 8.5in; margin: 0; }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   body { overflow: visible !important; background: #fff !important; }
   .app-header, .sidebar { display: none !important; }
-  .workspace { overflow: visible; }
-  .card-stage { padding: 0; overflow: visible; background: #fff; }
-  .card-wrap  { transform: none !important; }
-  .cico-card  {
+  .workspace { overflow: visible; height: auto; }
+  .card-stage { padding: 0; overflow: visible; background: #fff; display: block; }
+  .card-wrap  { transform: none !important; width: auto !important; height: auto !important; }
+
+  .cico-card {
     width: 11in !important;
     height: 8.5in !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    border: none !important;
   }
+
+  .card-top {
+    background: #3A86FF !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .card-goal-bar {
+    background: #FFF8E6 !important;
+    border-bottom: 1.5px solid #FFE082 !important;
+  }
+  .card-checkin-bar {
+    background: #F0F6FF !important;
+    border-bottom: 1.5px solid #C8DCFC !important;
+  }
+  .card-checkout-bar {
+    background: #FFF5F5 !important;
+    border-top: 1.5px solid #FFC8C8 !important;
+  }
+
+  .card-grid-wrap {
+    border: 2px solid #C4D4EC !important;
+    margin: 6px 14px !important;
+  }
+
+  .behavior-table thead tr  { background: #3A86FF !important; }
+  .behavior-table thead th  { color: #fff !important; border-right: 1px solid rgba(255,255,255,.3) !important; }
+  .scale-subrow td          { background: #EEF4FF !important; border-bottom: 1.5px solid #C3D4F5 !important; }
+  .beh-row:nth-child(odd) td { background: #F4F8FF !important; }
+  .beh-row:nth-child(even) td { background: #fff !important; }
+  .beh-row td               { border-right: 1px solid #D8E4F2 !important; border-bottom: 1px solid #D8E4F2 !important; }
+  .beh-row td.beh-name-cell { border-right: 2px solid #C4D4EC !important; }
+  .beh-row td.total-cell    { border-left: 2px solid #C4D4EC !important; }
+  .max-row td               { background: #DDE8F7 !important; border-top: 2px solid #B0C6E4 !important; border-right: 1px solid #C4D4EC !important; }
+  .max-row td:first-child   { border-right: 2px solid #B0C6E4 !important; }
+  .max-row td:last-child    { border-left: 2px solid #B0C6E4 !important; }
+
   .row-del, .add-beh-row { display: none !important; }
+  .ce-beh:empty::before  { display: none !important; }
+  .th-period:empty::before { display: none !important; }
 }
 </style>
 </head>
@@ -1005,21 +1095,18 @@ function rebuildGrid() {
   thTot.textContent = 'Total';
   hRow.appendChild(thTot);
 
-  // scale sub-row
+  // scale sub-row — compact single line, two cells only
   const tbody = tbl.createTBody();
   const subRow = tbody.insertRow();
   subRow.className = 'scale-subrow';
-  const sdTd = document.createElement('td');
-  sdTd.textContent = 'Scoring:';
-  subRow.appendChild(sdTd);
-  for (let p = 0; p < pds; p++) {
-    const td = document.createElement('td');
-    td.textContent = info.sub;
-    subRow.appendChild(td);
-  }
-  const sdTot = document.createElement('td');
-  sdTot.textContent = '/ ' + (info.max * pds * (beh.length || 1));
-  subRow.appendChild(sdTot);
+  const sdLabel = document.createElement('td');
+  sdLabel.textContent = 'Scale';
+  subRow.appendChild(sdLabel);
+  const sdLegend = document.createElement('td');
+  sdLegend.colSpan = pds + 1;
+  sdLegend.className = 'scale-legend';
+  sdLegend.textContent = info.sub;
+  subRow.appendChild(sdLegend);
 
   // ── behavior rows ──
   beh.forEach((b, idx) => {
