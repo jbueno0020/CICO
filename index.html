@@ -1099,7 +1099,7 @@ function rebuildGrid() {
     ce.contentEditable = 'true';
     ce.dataset.ph = `Period ${p+1}`;
     ce.dataset.index = p;
-    ce.textContent = pNames[p] !== `Period ${p+1}` ? pNames[p] : '';
+    ce.textContent = pNames[p];
     ce.addEventListener('input', () => { state.periodNames[p] = ce.textContent.trim() || `Period ${p+1}`; });
     ce.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); ce.blur(); } });
     th.appendChild(ce);
