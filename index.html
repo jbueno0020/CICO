@@ -652,29 +652,42 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
 .beh-row:hover .row-del { opacity: 1; }
 .row-del:hover { color: var(--coral); }
 
-/* Max row footer */
+/* Positive comments row */
 .max-row td {
-  background: #DDE8F7;
-  padding: 5px 6px;
-  font-size: 10.5px;
-  font-weight: 800;
-  color: #1D4E8F;
-  text-align: center;
-  border-top: 2px solid #B0C6E4;
-  border-right: 1px solid #C4D4EC;
+  background: #F0F9F0;
+  border-top: 2px solid #B5D9B5;
+  border-right: none;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
-.max-row td:first-child {
-  text-align: left;
-  padding-left: 12px;
-  border-right: 2px solid #B0C6E4;
+.max-row td.pos-label {
+  padding: 7px 10px 7px 12px;
+  border-right: 2px solid #B5D9B5;
+  vertical-align: middle;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.max-row td:last-child {
-  border-right: none;
-  border-left: 2px solid #B0C6E4;
-  font-size: 12px;
-  color: #1D4E8F;
+.pos-icon  { font-size: 14px; line-height: 1; }
+.pos-title { font-size: 11px; font-weight: 800; color: #2D6A2D; letter-spacing: .1px; }
+.max-row td.pos-comment {
+  padding: 7px 14px 7px 12px;
+  vertical-align: middle;
+}
+.pos-prompt {
+  font-size: 10px;
+  font-weight: 700;
+  color: #5A8A5A;
+  font-style: italic;
+  margin-right: 10px;
+}
+.pos-line {
+  display: inline-block;
+  width: calc(100% - 10px);
+  border-bottom: 1.5px solid #9DC59D;
+  vertical-align: bottom;
+  margin-top: 4px;
 }
 
 /* Add behavior inline button */
@@ -741,7 +754,9 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
 .behavior-table thead th,
 .scale-subrow td,
 .beh-row:nth-child(odd) td,
-.max-row td {
+.max-row td,
+.pos-label,
+.pos-comment {
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -800,9 +815,9 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
   .beh-row td               { border-right: 1px solid #D8E4F2 !important; border-bottom: 1px solid #D8E4F2 !important; }
   .beh-row td.beh-name-cell { border-right: 2px solid #C4D4EC !important; }
   .beh-row td.total-cell    { border-left: 2px solid #C4D4EC !important; }
-  .max-row td               { background: #DDE8F7 !important; border-top: 2px solid #B0C6E4 !important; border-right: 1px solid #C4D4EC !important; }
-  .max-row td:first-child   { border-right: 2px solid #B0C6E4 !important; }
-  .max-row td:last-child    { border-left: 2px solid #B0C6E4 !important; }
+  .max-row td               { background: #F0F9F0 !important; border-top: 2px solid #B5D9B5 !important; }
+  .max-row td.pos-label     { border-right: 2px solid #B5D9B5 !important; }
+  .pos-line                 { border-bottom: 1.5px solid #9DC59D !important; }
 
   .row-del, .add-beh-row { display: none !important; }
   .ce-beh:empty::before  { display: none !important; }
@@ -1147,21 +1162,18 @@ function rebuildGrid() {
     row.appendChild(tot);
   });
 
-  // ── max / possible row ──
+  // ── positive comments row ──
   const maxRow = tbody.insertRow();
   maxRow.className = 'max-row';
   const mLabel = document.createElement('td');
-  mLabel.textContent = `Period Max  (${info.max} pts × ${beh.length} behavior${beh.length!==1?'s':''})`;
+  mLabel.className = 'pos-label';
+  mLabel.innerHTML = '<span class="pos-icon">💬</span><span class="pos-title">Positive Comments</span>';
   maxRow.appendChild(mLabel);
-  const periodMax = info.max * beh.length;
-  for (let p = 0; p < pds; p++) {
-    const td = document.createElement('td');
-    td.textContent = beh.length ? periodMax : '—';
-    maxRow.appendChild(td);
-  }
-  const totMax = document.createElement('td');
-  totMax.textContent = beh.length ? info.max * beh.length * pds : '—';
-  maxRow.appendChild(totMax);
+  const mComment = document.createElement('td');
+  mComment.colSpan = pds + 1;
+  mComment.className = 'pos-comment';
+  mComment.innerHTML = '<span class="pos-prompt">Share one thing this student did well today:</span><div class="pos-line"></div>';
+  maxRow.appendChild(mComment);
 
   // ── add-behavior inline ──
   if (beh.length < 6) {
