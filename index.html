@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CICO Card Creator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue:   #3A86FF;
+  --yellow: #FFBE0B;
+  --coral:  #FF6B6B;
+  --bg:     #F7F8FC;
+  --white:  #FFFFFF;
+  --border: #D1D5DB;
+  --text:   #1E293B;
+  --muted:  #64748B;
+  --shadow: 0 2px 16px rgba(58,134,255,.10);
+  --radius-panel: 14px;
+  --radius-input: 8px;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── App Header ── */
+.app-header {
+  background: var(--blue);
+  color: var(--white);
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 12px rgba(58,134,255,.35);
+}
+.app-header .logo {
+  font-size: 28px;
+  line-height: 1;
+}
+.app-header h1 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.3px;
+}
+.app-header p {
+  font-size: 13px;
+  opacity: .85;
+  margin-top: 2px;
+}
+
+/* ── Two-column layout ── */
+.workspace {
+  display: grid;
+  grid-template-columns: 480px 1fr;
+  gap: 24px;
+  padding: 24px 28px 40px;
+  max-width: 1260px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+}
+
+/* ── Panels ── */
+.panel {
+  background: var(--white);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+
+.panel-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-title::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: var(--bg);
+  border-radius: 99px;
+  margin-left: 6px;
+}
+
+/* ── Section Labels ── */
+.section {
+  margin-bottom: 22px;
+}
+.section-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--blue);
+  border-left: 4px solid var(--blue);
+  padding-left: 9px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Form Elements ── */
+.form-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+.form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  padding: 8px 11px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-input);
+  background: var(--white);
+  color: var(--text);
+  transition: border-color .2s, box-shadow .2s;
+  outline: none;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(58,134,255,.15);
+}
+.form-group input[type="number"] { -moz-appearance: textfield; }
+.form-group input[type="number"]::-webkit-outer-spin-button,
+.form-group input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+/* ── Goal display ── */
+.goal-callout {
+  background: #EEF4FF;
+  border: 1.5px solid #BDD3FF;
+  border-radius: var(--radius-input);
+  padding: 10px 13px;
+  font-size: 13px;
+  color: var(--blue);
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+/* ── Behaviors ── */
+.behavior-counter {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.behavior-counter .count {
+  color: var(--blue);
+}
+.behavior-counter .count.max {
+  color: var(--coral);
+}
+
+.preset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.behavior-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  font-size: 13px;
+  font-weight: 600;
+  user-select: none;
+}
+.behavior-item:hover {
+  background: #F0F5FF;
+  border-color: #BDD3FF;
+}
+.behavior-item.selected {
+  background: #EEF4FF;
+  border-color: var(--blue);
+  color: var(--blue);
+}
+.behavior-item.disabled:not(.selected) {
+  opacity: .45;
+  cursor: not-allowed;
+}
+.behavior-item input[type="checkbox"] {
+  accent-color: var(--blue);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.custom-behaviors {
+  border-top: 1.5px dashed var(--border);
+  padding-top: 12px;
+}
+.custom-behaviors .sub-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.custom-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+.custom-row input[type="text"] {
+  flex: 1;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  padding: 7px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-input);
+  background: var(--white);
+  outline: none;
+  transition: border-color .2s;
+}
+.custom-row input[type="text"]:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(58,134,255,.12);
+}
+.custom-row input[type="text"]:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+/* ── Radio / scale selector ── */
+.scale-options {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.scale-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  font-size: 13px;
+  font-weight: 600;
+}
+.scale-option:hover { background: #F0F5FF; border-color: #BDD3FF; }
+.scale-option.selected { background: #EEF4FF; border-color: var(--blue); color: var(--blue); }
+.scale-option input[type="radio"] { accent-color: var(--blue); margin-top: 2px; }
+.scale-option .desc { font-size: 11.5px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+.scale-option.selected .desc { color: #6FA0E8; }
+
+/* ── Period Stepper ── */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-input);
+  overflow: hidden;
+  width: fit-content;
+}
+.stepper button {
+  background: var(--bg);
+  border: none;
+  padding: 7px 13px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--blue);
+  transition: background .15s;
+  font-family: 'Nunito', sans-serif;
+}
+.stepper button:hover { background: #E0EAFF; }
+.stepper span {
+  padding: 7px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  min-width: 44px;
+  text-align: center;
+  border-left: 1.5px solid var(--border);
+  border-right: 1.5px solid var(--border);
+}
+
+.period-labels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 12px;
+}
+.period-labels input {
+  font-family: 'Nunito', sans-serif;
+  font-size: 12.5px;
+  padding: 6px 9px;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  outline: none;
+  transition: border-color .2s;
+}
+.period-labels input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(58,134,255,.12);
+}
+
+/* ── Buttons ── */
+.btn {
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: var(--radius-input);
+  border: none;
+  cursor: pointer;
+  transition: box-shadow .2s, transform .15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.btn:hover { box-shadow: 0 6px 18px rgba(58,134,255,.30); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); box-shadow: none; }
+.btn-primary { background: var(--blue); color: var(--white); }
+.btn-secondary { background: var(--bg); color: var(--blue); border: 1.5px solid var(--blue); }
+.btn-yellow { background: var(--yellow); color: #1E293B; }
+
+.action-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+/* ── Preview Panel ── */
+.preview-panel {
+  position: sticky;
+  top: 24px;
+}
+.preview-panel .panel-title { margin-bottom: 14px; }
+
+.preview-scaler {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 10px 0 20px;
+}
+
+/* ── CARD (the printable output) ── */
+.cico-card {
+  width: 5.5in;
+  min-height: 8in;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: 'Nunito', sans-serif;
+  color: #111;
+  box-shadow: 0 4px 24px rgba(0,0,0,.12);
+  transform-origin: top center;
+}
+
+/* Card Header */
+.card-header {
+  background: var(--blue);
+  color: #fff;
+  padding: 14px 20px 12px;
+}
+.card-header .card-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -.2px;
+}
+.card-header .card-meta {
+  display: flex;
+  gap: 18px;
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: .9;
+}
+.card-header .card-meta span { display: flex; align-items: center; gap: 4px; }
+
+/* Card Goal Box */
+.card-goal {
+  background: #FFF9E6;
+  border: 2px solid var(--yellow);
+  border-radius: 9px;
+  margin: 12px 14px 8px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #7A5C00;
+  text-align: center;
+}
+.card-goal .goal-text { font-size: 14px; margin-top: 2px; color: #3A86FF; }
+
+/* Check-in */
+.card-checkin {
+  margin: 6px 14px 10px;
+  display: flex;
+  gap: 16px;
+}
+.checkin-box {
+  flex: 1;
+  border: 1.5px solid #D1D5DB;
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+.checkin-box .box-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--blue);
+  margin-bottom: 6px;
+}
+.checkin-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  gap: 6px;
+}
+.checkin-line .field-line {
+  flex: 1;
+  border-bottom: 1.5px solid #aaa;
+  min-height: 14px;
+}
+
+/* Behavior Grid */
+.card-grid-wrap {
+  margin: 0 14px 12px;
+  border-radius: 9px;
+  overflow: hidden;
+  border: 1.5px solid #D1D5DB;
+}
+.card-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.card-grid thead tr {
+  background: var(--blue);
+  color: #fff;
+}
+.card-grid thead th {
+  padding: 6px 6px;
+  font-weight: 700;
+  text-align: center;
+  font-size: 10.5px;
+  border-right: 1px solid rgba(255,255,255,.25);
+}
+.card-grid thead th:first-child {
+  text-align: left;
+  padding-left: 10px;
+  width: 38%;
+}
+.card-grid tbody tr:nth-child(odd) { background: #F0F6FF; }
+.card-grid tbody tr:nth-child(even) { background: #fff; }
+.card-grid tbody td {
+  padding: 5px 6px;
+  border-right: 1px solid #E5E7EB;
+  border-bottom: 1px solid #E5E7EB;
+  text-align: center;
+  font-size: 10.5px;
+  vertical-align: middle;
+}
+.card-grid tbody td:first-child {
+  text-align: left;
+  padding-left: 10px;
+  font-weight: 600;
+  font-size: 10.5px;
+  line-height: 1.3;
+}
+.card-grid tfoot tr { background: #EEF4FF; }
+.card-grid tfoot td {
+  padding: 5px 6px;
+  font-weight: 700;
+  font-size: 10.5px;
+  text-align: center;
+  border-top: 2px solid #C3D4F5;
+  color: var(--blue);
+}
+.card-grid tfoot td:first-child {
+  text-align: left;
+  padding-left: 10px;
+}
+
+/* Card Checkout */
+.card-checkout {
+  margin: 0 14px 14px;
+  border: 1.5px solid #D1D5DB;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.checkout-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--coral);
+  margin-bottom: 7px;
+}
+.checkout-row {
+  display: flex;
+  gap: 18px;
+}
+.checkout-field {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.checkout-field .field-line {
+  flex: 1;
+  border-bottom: 1.5px solid #aaa;
+  min-height: 14px;
+}
+
+/* ── Print styles ── */
+@media print {
+  @page {
+    size: 5.5in 8.5in;
+    margin: 0;
+  }
+  body { background: white !important; }
+  .app-header, .builder-panel, .print-tip { display: none !important; }
+  .workspace { display: block; padding: 0; }
+  .preview-panel {
+    position: static;
+    background: none;
+    box-shadow: none;
+    padding: 0;
+  }
+  .preview-panel .panel-title,
+  .action-bar,
+  .preview-scale-controls { display: none !important; }
+  .preview-scaler {
+    padding: 0;
+    transform: none !important;
+  }
+  .cico-card {
+    width: 5.5in !important;
+    min-height: 8.5in;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    page-break-inside: avoid;
+  }
+}
+
+/* ── Scale controls ── */
+.preview-scale-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.preview-scale-controls label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.scale-slider {
+  -webkit-appearance: none;
+  height: 4px;
+  background: var(--border);
+  border-radius: 4px;
+  outline: none;
+  width: 120px;
+}
+.scale-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--blue);
+  cursor: pointer;
+}
+
+/* ── Print tip ── */
+.print-tip {
+  background: #FFF9E6;
+  border: 1.5px solid #FFDF6B;
+  border-radius: 8px;
+  padding: 9px 13px;
+  font-size: 12px;
+  color: #7A5C00;
+  font-weight: 600;
+  margin-top: 12px;
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+}
+
+/* ── Scrollable builder ── */
+.builder-inner {
+  max-height: calc(100vh - 130px);
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <span class="logo">📋</span>
+  <div>
+    <h1>CICO Card Creator</h1>
+    <p>Check-In Check-Out Behavior Support Card Builder</p>
+  </div>
+</header>
+
+<div class="workspace">
+
+  <!-- ══ BUILDER PANEL ══ -->
+  <div class="panel builder-panel">
+    <div class="panel-title">⚙️ Card Builder</div>
+    <div class="builder-inner">
+
+      <!-- 1. Student Info -->
+      <div class="section">
+        <div class="section-label">🎒 Student Information</div>
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label>Student First Name</label>
+            <input type="text" id="studentName" placeholder="e.g. Marcus" maxlength="30" />
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Grade</label>
+            <select id="grade">
+              <option value="">—</option>
+              <option value="K">K</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Week Start (Monday)</label>
+            <input type="date" id="dateStart" />
+          </div>
+          <div class="form-group">
+            <label>Week End (Friday)</label>
+            <input type="date" id="dateEnd" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Daily Goal -->
+      <div class="section">
+        <div class="section-label">🎯 Daily Goal</div>
+        <div class="form-row">
+          <div class="form-group" style="flex:0 0 120px">
+            <label>Goal Percentage (%)</label>
+            <input type="number" id="goalPct" value="80" min="1" max="100" style="text-align:center;font-size:16px;font-weight:700" />
+          </div>
+        </div>
+        <div class="goal-callout" id="goalCallout">
+          ⭐ Configure behaviors and periods to see your goal calculation.
+        </div>
+      </div>
+
+      <!-- 3. Behaviors -->
+      <div class="section">
+        <div class="section-label">✅ Behaviors <span style="font-weight:400;color:var(--muted);font-size:11px">(select up to 6)</span></div>
+        <div class="behavior-counter">
+          Selected: <span class="count" id="behaviorCount">0</span> / 6
+        </div>
+        <div class="preset-list" id="presetList">
+          <!-- Populated by JS -->
+        </div>
+        <div class="custom-behaviors">
+          <div class="sub-label">➕ Add your own (up to 3 custom)</div>
+          <div class="custom-row">
+            <input type="text" id="custom1" placeholder="Custom behavior #1" maxlength="60" />
+          </div>
+          <div class="custom-row">
+            <input type="text" id="custom2" placeholder="Custom behavior #2" maxlength="60" />
+          </div>
+          <div class="custom-row">
+            <input type="text" id="custom3" placeholder="Custom behavior #3" maxlength="60" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Point Scale -->
+      <div class="section">
+        <div class="section-label">🔢 Point Scale</div>
+        <div class="scale-options" id="scaleOptions">
+          <label class="scale-option selected">
+            <input type="radio" name="scale" value="0-2" checked />
+            <div>
+              <div>0 – 2 Scale</div>
+              <div class="desc">0 = Did not meet &nbsp;|&nbsp; 1 = Partially met &nbsp;|&nbsp; 2 = Met</div>
+            </div>
+          </label>
+          <label class="scale-option">
+            <input type="radio" name="scale" value="0-3" />
+            <div>
+              <div>0 – 3 Scale</div>
+              <div class="desc">0 = Not met &nbsp;|&nbsp; 1 = Rarely &nbsp;|&nbsp; 2 = Sometimes &nbsp;|&nbsp; 3 = Consistently</div>
+            </div>
+          </label>
+          <label class="scale-option">
+            <input type="radio" name="scale" value="yes-no" />
+            <div>
+              <div>Yes / No</div>
+              <div class="desc">1 = Yes &nbsp;|&nbsp; 0 = No</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 5. Periods -->
+      <div class="section">
+        <div class="section-label">🕐 Periods / Blocks</div>
+        <div class="form-row" style="align-items:center;gap:14px">
+          <label style="font-size:13px;font-weight:600;color:var(--muted)">Number of periods:</label>
+          <div class="stepper">
+            <button id="periodMinus" onclick="changePeriods(-1)">−</button>
+            <span id="periodCount">6</span>
+            <button id="periodPlus" onclick="changePeriods(1)">+</button>
+          </div>
+        </div>
+        <div class="period-labels" id="periodLabels">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="window.print()">🖨️ Print Card</button>
+        <button class="btn btn-secondary" onclick="resetForm()">↩️ Reset</button>
+      </div>
+
+      <div class="print-tip">
+        💡 <span>Set your browser to <strong>paper size 5.5 × 8.5 in</strong> and margins to <strong>None</strong> for best results. Disable headers/footers.</span>
+      </div>
+
+    </div><!-- /builder-inner -->
+  </div><!-- /builder-panel -->
+
+  <!-- ══ PREVIEW PANEL ══ -->
+  <div class="panel preview-panel">
+    <div class="panel-title">👁️ Card Preview <span style="font-size:12px;font-weight:400;color:var(--muted);margin-left:6px">(live updates)</span></div>
+
+    <div class="preview-scale-controls">
+      <label for="zoomSlider">Zoom:</label>
+      <input type="range" class="scale-slider" id="zoomSlider" min="40" max="100" value="72" oninput="applyZoom(this.value)" />
+      <span id="zoomLabel" style="font-size:12px;font-weight:700;color:var(--blue)">72%</span>
+      <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px;margin-left:auto" onclick="window.print()">🖨️ Print</button>
+    </div>
+
+    <div class="preview-scaler" id="previewScaler">
+      <!-- CICO Card -->
+      <div class="cico-card" id="cicoCard">
+
+        <!-- Card Header -->
+        <div class="card-header">
+          <div class="card-title" id="cardTitle">Student Name</div>
+          <div class="card-meta">
+            <span>📚 <span id="cardGrade">Grade —</span></span>
+            <span>📅 <span id="cardDateRange">Week of —</span></span>
+          </div>
+        </div>
+
+        <!-- Goal -->
+        <div class="card-goal">
+          <div>⭐ Daily Goal</div>
+          <div class="goal-text" id="cardGoalText">Configure your card to see the goal.</div>
+        </div>
+
+        <!-- Check-In -->
+        <div class="card-checkin">
+          <div class="checkin-box">
+            <div class="box-label">☀️ Morning Check-In</div>
+            <div class="checkin-line">
+              <span>Today's Goal:</span>
+              <div class="field-line"></div>
+            </div>
+            <div class="checkin-line">
+              <span>Mentor Initials:</span>
+              <div class="field-line"></div>
+            </div>
+          </div>
+          <div class="checkin-box" style="flex:0 0 auto;min-width:130px">
+            <div class="box-label">💬 Mentor Note</div>
+            <div style="border:1px solid #E5E7EB;border-radius:5px;height:38px;"></div>
+          </div>
+        </div>
+
+        <!-- Behavior Grid -->
+        <div class="card-grid-wrap">
+          <table class="card-grid" id="behaviorGrid">
+            <!-- Populated by JS -->
+          </table>
+        </div>
+
+        <!-- Check-Out -->
+        <div class="card-checkout">
+          <div class="checkout-label">🌙 End of Day Check-Out</div>
+          <div class="checkout-row">
+            <div class="checkout-field">
+              <span>Points Earned:</span>
+              <div class="field-line"></div>
+              <span>/</span>
+              <div class="field-line" style="max-width:36px"></div>
+            </div>
+            <div class="checkout-field">
+              <span>Goal Met?</span>
+              <div class="field-line" style="max-width:50px"></div>
+            </div>
+          </div>
+          <div class="checkout-row" style="margin-top:7px">
+            <div class="checkout-field">
+              <span>Mentor Signature:</span>
+              <div class="field-line"></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /cico-card -->
+    </div><!-- /preview-scaler -->
+  </div><!-- /preview-panel -->
+
+</div><!-- /workspace -->
+
+<script>
+// ── State ──
+const PRESETS = [
+  "Comes to class prepared (materials, homework)",
+  "Stays on task during instruction",
+  "Follows directions the first time",
+  "Uses respectful language with adults",
+  "Uses respectful language with peers",
+  "Keeps hands and feet to self",
+  "Transitions appropriately between activities",
+  "Manages frustration appropriately",
+  "Participates positively in class",
+  "Completes assigned work"
+];
+
+const SCALE_MAX = { '0-2': 2, '0-3': 3, 'yes-no': 1 };
+const SCALE_LABELS = {
+  '0-2':    ['0', '1', '2'],
+  '0-3':    ['0', '1', '2', '3'],
+  'yes-no': ['No (0)', 'Yes (1)']
+};
+
+let selectedPresets = new Set();
+let periods = 6;
+let periodNames = Array.from({length: 8}, (_, i) => `Period ${i+1}`);
+
+// ── Init ──
+function init() {
+  renderPresets();
+  renderPeriodLabels();
+  bindEvents();
+  updatePreview();
+
+  // Set default dates to current week Mon–Fri
+  const today = new Date();
+  const day = today.getDay();
+  const mon = new Date(today);
+  mon.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+  const fri = new Date(mon);
+  fri.setDate(mon.getDate() + 4);
+  document.getElementById('dateStart').value = toDateValue(mon);
+  document.getElementById('dateEnd').value   = toDateValue(fri);
+}
+
+function toDateValue(d) {
+  return d.toISOString().split('T')[0];
+}
+
+function toDisplayDate(str) {
+  if (!str) return '';
+  const [y, m, d] = str.split('-');
+  return `${parseInt(m)}/${parseInt(d)}/${y}`;
+}
+
+// ── Render Preset List ──
+function renderPresets() {
+  const el = document.getElementById('presetList');
+  const count = selectedPresets.size + countCustom();
+  el.innerHTML = PRESETS.map((b, i) => {
+    const sel = selectedPresets.has(i);
+    const dis = !sel && count >= 6;
+    return `<div class="behavior-item ${sel ? 'selected' : ''} ${dis ? 'disabled' : ''}"
+      onclick="togglePreset(${i}, this)" data-index="${i}">
+      <input type="checkbox" ${sel ? 'checked' : ''} ${dis ? 'disabled' : ''} />
+      <span>${b}</span>
+    </div>`;
+  }).join('');
+}
+
+function togglePreset(i, el) {
+  const total = selectedPresets.size + countCustom();
+  if (selectedPresets.has(i)) {
+    selectedPresets.delete(i);
+  } else {
+    if (total >= 6) return;
+    selectedPresets.add(i);
+  }
+  renderPresets();
+  updateCounter();
+  updatePreview();
+}
+
+function countCustom() {
+  return [1,2,3].filter(n => document.getElementById(`custom${n}`)?.value.trim()).length;
+}
+
+function updateCounter() {
+  const total = selectedPresets.size + countCustom();
+  const el = document.getElementById('behaviorCount');
+  el.textContent = total;
+  el.className = 'count' + (total >= 6 ? ' max' : '');
+  // disable custom inputs if at max
+  [1,2,3].forEach(n => {
+    const inp = document.getElementById(`custom${n}`);
+    if (!inp) return;
+    const hasVal = inp.value.trim().length > 0;
+    inp.disabled = total >= 6 && !hasVal;
+  });
+}
+
+// ── Render Period Labels ──
+function renderPeriodLabels() {
+  const el = document.getElementById('periodLabels');
+  let html = '';
+  for (let i = 0; i < periods; i++) {
+    html += `<input type="text" placeholder="Period ${i+1}" value="${periodNames[i] === `Period ${i+1}` ? '' : periodNames[i]}"
+      oninput="periodNames[${i}]=this.value||'Period ${i+1}';updatePreview()" maxlength="18" />`;
+  }
+  el.innerHTML = html;
+}
+
+function changePeriods(delta) {
+  periods = Math.max(1, Math.min(8, periods + delta));
+  document.getElementById('periodCount').textContent = periods;
+  renderPeriodLabels();
+  updatePreview();
+}
+
+// ── Bind Events ──
+function bindEvents() {
+  ['studentName','grade','dateStart','dateEnd','goalPct'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', updatePreview);
+  });
+  document.querySelectorAll('input[name="scale"]').forEach(r => {
+    r.addEventListener('change', () => {
+      document.querySelectorAll('.scale-option').forEach(el => el.classList.remove('selected'));
+      r.closest('.scale-option').classList.add('selected');
+      updatePreview();
+    });
+  });
+  [1,2,3].forEach(n => {
+    document.getElementById(`custom${n}`)?.addEventListener('input', () => {
+      updateCounter();
+      updatePreview();
+    });
+  });
+}
+
+// ── Get Current Scale ──
+function getScale() {
+  return document.querySelector('input[name="scale"]:checked')?.value || '0-2';
+}
+
+// ── Get Selected Behaviors (in order) ──
+function getBehaviors() {
+  const list = [];
+  // Presets in original order
+  PRESETS.forEach((b, i) => { if (selectedPresets.has(i)) list.push(b); });
+  // Custom
+  [1,2,3].forEach(n => {
+    const v = document.getElementById(`custom${n}`)?.value.trim();
+    if (v) list.push(v);
+  });
+  return list.slice(0, 6);
+}
+
+// ── Compute Goal Numbers ──
+function computeGoal(behaviors, scale, pds, pct) {
+  const maxPer = SCALE_MAX[scale];
+  const totalPossible = behaviors.length * pds * maxPer;
+  const goal = Math.round(totalPossible * (pct / 100));
+  return { totalPossible, goal };
+}
+
+// ── Update Preview ──
+function updatePreview() {
+  const name     = document.getElementById('studentName').value.trim() || 'Student Name';
+  const grade    = document.getElementById('grade').value;
+  const ds       = document.getElementById('dateStart').value;
+  const de       = document.getElementById('dateEnd').value;
+  const pct      = parseInt(document.getElementById('goalPct').value) || 80;
+  const scale    = getScale();
+  const behaviors = getBehaviors();
+
+  // Header
+  document.getElementById('cardTitle').textContent = name;
+  document.getElementById('cardGrade').textContent = grade ? `Grade ${grade}` : 'Grade —';
+  const dateStr = ds ? `${toDisplayDate(ds)}${de ? ' – ' + toDisplayDate(de) : ''}` : '—';
+  document.getElementById('cardDateRange').textContent = `Week of ${dateStr}`;
+
+  // Goal
+  const { totalPossible, goal } = computeGoal(behaviors, scale, periods, pct);
+  const goalText = behaviors.length > 0
+    ? `Your goal is to earn ${goal} out of ${totalPossible} points each day (${pct}%)`
+    : 'Select behaviors to calculate your goal.';
+  document.getElementById('cardGoalText').textContent = goalText;
+  document.getElementById('goalCallout').textContent =
+    behaviors.length > 0
+      ? `⭐ Goal: ${goal} / ${totalPossible} points per day (${pct}%)`
+      : '⭐ Select behaviors and set your percentage to see the goal.';
+
+  // Build Grid
+  const maxPer = SCALE_MAX[scale];
+  const scaleLabels = SCALE_LABELS[scale];
+  const periodCols = Array.from({length: periods}, (_, i) => periodNames[i] || `Period ${i+1}`);
+
+  let thead = `<thead><tr><th>Behavior</th>`;
+  periodCols.forEach(p => { thead += `<th>${p}</th>`; });
+  thead += `<th>Total</th></tr></thead>`;
+
+  let tbody = `<tbody>`;
+  if (behaviors.length === 0) {
+    tbody += `<tr><td colspan="${periods+2}" style="text-align:center;color:#aaa;padding:16px;font-style:italic">Select behaviors to populate the card.</td></tr>`;
+  } else {
+    behaviors.forEach(b => {
+      tbody += `<tr><td>${b}</td>`;
+      for (let p = 0; p < periods; p++) {
+        tbody += `<td></td>`;
+      }
+      tbody += `<td></td></tr>`;
+    });
+  }
+  tbody += `</tbody>`;
+
+  const maxRow = behaviors.length > 0
+    ? `<tfoot><tr><td>Period Max (${maxPer} pts each)</td>` +
+      Array(periods).fill(`<td>${behaviors.length * maxPer}</td>`).join('') +
+      `<td>${totalPossible}</td></tr></tfoot>`
+    : '';
+
+  // Scale legend row in thead
+  let scaleLegendRow = '';
+  if (behaviors.length > 0) {
+    const legendText = scaleLabels.join('  |  ');
+    scaleLegendRow = `<tr><td colspan="${periods+2}" style="background:#EEF4FF;color:var(--blue);font-size:9.5px;font-weight:700;text-align:center;padding:4px 6px;border-bottom:1.5px solid #C3D4F5">${legendText}</td></tr>`;
+  }
+
+  document.getElementById('behaviorGrid').innerHTML = thead + `<tbody>${scaleLegendRow ? scaleLegendRow.replace('<tbody>','') : ''}</tbody>` + tbody + maxRow;
+
+  // Actually: rebuild properly
+  const grid = document.getElementById('behaviorGrid');
+  grid.innerHTML = '';
+
+  // Head
+  const tHead = grid.createTHead();
+  const hRow = tHead.insertRow();
+  const th0 = document.createElement('th');
+  th0.textContent = 'Behavior';
+  hRow.appendChild(th0);
+  periodCols.forEach(p => {
+    const th = document.createElement('th');
+    th.textContent = p;
+    hRow.appendChild(th);
+  });
+  const thTot = document.createElement('th');
+  thTot.textContent = 'Total';
+  hRow.appendChild(thTot);
+
+  // Scale legend
+  const legRow = tHead.insertRow();
+  const legTd = document.createElement('td');
+  legTd.colSpan = periods + 2;
+  legTd.textContent = scaleLabels.join('   |   ');
+  legTd.style.cssText = 'background:#EEF4FF;color:#3A86FF;font-size:9.5px;font-weight:700;text-align:center;padding:4px 6px;border-bottom:1.5px solid #C3D4F5;font-family:Nunito,sans-serif';
+  legRow.appendChild(legTd);
+
+  // Body
+  const tBody = grid.createTBody();
+  if (behaviors.length === 0) {
+    const r = tBody.insertRow();
+    const c = r.insertCell();
+    c.colSpan = periods + 2;
+    c.textContent = 'Select behaviors to populate the card.';
+    c.style.cssText = 'text-align:center;color:#aaa;padding:16px;font-style:italic';
+  } else {
+    behaviors.forEach(b => {
+      const r = tBody.insertRow();
+      const c0 = r.insertCell();
+      c0.textContent = b;
+      for (let p = 0; p < periods; p++) r.insertCell();
+      r.insertCell(); // total
+    });
+  }
+
+  // Foot
+  if (behaviors.length > 0) {
+    const tFoot = grid.createTFoot();
+    const fRow = tFoot.insertRow();
+    const fc0 = fRow.insertCell();
+    fc0.textContent = `Period Max (${maxPer} pts ea.)`;
+    for (let p = 0; p < periods; p++) {
+      const fc = fRow.insertCell();
+      fc.textContent = behaviors.length * maxPer;
+    }
+    const fcTot = fRow.insertCell();
+    fcTot.textContent = totalPossible;
+  }
+
+  updateCounter();
+  applyZoom(document.getElementById('zoomSlider').value);
+}
+
+// ── Zoom ──
+function applyZoom(val) {
+  const pct = val / 100;
+  document.getElementById('zoomLabel').textContent = `${val}%`;
+  document.getElementById('cicoCard').style.transform = `scale(${pct})`;
+  document.getElementById('previewScaler').style.height = `calc(${pct} * (8in + 20px) + 20px)`;
+}
+
+// ── Reset ──
+function resetForm() {
+  if (!confirm('Reset all fields?')) return;
+  document.getElementById('studentName').value = '';
+  document.getElementById('grade').value = '';
+  document.getElementById('goalPct').value = '80';
+  selectedPresets.clear();
+  [1,2,3].forEach(n => { document.getElementById(`custom${n}`).value = ''; });
+  document.querySelectorAll('input[name="scale"]')[0].checked = true;
+  document.querySelectorAll('.scale-option').forEach((el,i) => el.classList.toggle('selected', i===0));
+  periods = 6;
+  document.getElementById('periodCount').textContent = '6';
+  periodNames = Array.from({length: 8}, (_, i) => `Period ${i+1}`);
+  renderPresets();
+  renderPeriodLabels();
+  const today = new Date();
+  const day = today.getDay();
+  const mon = new Date(today);
+  mon.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+  const fri = new Date(mon);
+  fri.setDate(mon.getDate() + 4);
+  document.getElementById('dateStart').value = toDateValue(mon);
+  document.getElementById('dateEnd').value   = toDateValue(fri);
+  updatePreview();
+}
+
+// ── Boot ──
+init();
+</script>
+</body>
+</html>
