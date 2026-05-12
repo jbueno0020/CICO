@@ -3,26 +3,23 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CICO Card Creator</title>
+<title>CICO Tools</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-/* ─── Reset ─────────────────────────────────────── */
+/* ── Reset & Variables ──────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 :root {
-  --blue:    #3A86FF;
-  --yellow:  #FFBE0B;
-  --coral:   #FF6B6B;
-  --bg:      #F0F2F8;
-  --white:   #FFFFFF;
-  --border:  #D1D5DB;
-  --text:    #1E293B;
-  --muted:   #64748B;
-  --r:       8px;
+  --blue:   #3A86FF;  --yellow: #FFBE0B;
+  --mint:   #06D6A0;  --coral:  #FF6B6B;
+  --bg:     #F0F2F8;  --white:  #FFFFFF;
+  --border: #D1D5DB;  --text:   #1E293B;
+  --muted:  #64748B;
+  --shadow: 0 2px 16px rgba(58,134,255,.09);
+  --r: 12px;
 }
-
 body {
   font-family: 'Nunito', sans-serif;
   background: var(--bg);
@@ -33,43 +30,50 @@ body {
   flex-direction: column;
 }
 
-/* ─── App Shell ──────────────────────────────────── */
+/* ── App Header ─────────────────────────────────── */
 .app-header {
   background: var(--blue);
   color: #fff;
   padding: 10px 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-shrink: 0;
   box-shadow: 0 2px 10px rgba(58,134,255,.35);
-  z-index: 10;
+  z-index: 20;
 }
-.app-header .logo { font-size: 22px; line-height: 1; }
-.app-header h1   { font-size: 18px; font-weight: 800; letter-spacing: -.2px; }
-.app-header p    { font-size: 11.5px; opacity: .8; }
+.app-header .logo { font-size: 22px; }
+.app-header h1 { font-size: 17px; font-weight: 800; }
+.app-header p  { font-size: 11px; opacity: .8; }
 .app-nav { margin-left: auto; display: flex; gap: 6px; }
 .nav-tab {
   font-family: 'Nunito', sans-serif;
   font-size: 12.5px;
   font-weight: 700;
-  padding: 5px 13px;
+  padding: 5px 14px;
   border-radius: 99px;
-  text-decoration: none;
+  border: none;
+  cursor: pointer;
   color: rgba(255,255,255,.8);
+  background: rgba(255,255,255,.12);
   transition: background .15s, color .15s;
 }
-.nav-tab:hover  { background: rgba(255,255,255,.15); color: #fff; }
+.nav-tab:hover  { background: rgba(255,255,255,.2); color: #fff; }
 .nav-tab.active { background: #fff; color: var(--blue); }
 
-.workspace {
-  display: flex;
+/* ── View containers ────────────────────────────── */
+.view {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
-/* ─── Sidebar ────────────────────────────────────── */
-.sidebar {
+/* ════════════════════════════════════════════════
+   CARD CREATOR
+════════════════════════════════════════════════ */
+/* Sidebar */
+.card-sidebar {
   width: 230px;
   flex-shrink: 0;
   background: var(--white);
@@ -80,11 +84,7 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
-
-.sb-section {
-  padding: 14px 16px;
-  border-bottom: 1.5px solid #F1F3F7;
-}
+.sb-section { padding: 14px 16px; border-bottom: 1.5px solid #F1F3F7; }
 .sb-label {
   font-size: 10.5px;
   font-weight: 700;
@@ -96,8 +96,6 @@ body {
   align-items: center;
   gap: 5px;
 }
-
-/* scale radio */
 .scale-opts { display: flex; flex-direction: column; gap: 5px; }
 .scale-opt {
   display: flex;
@@ -117,7 +115,6 @@ body {
 .scale-opt .sub   { font-size: 10px; font-weight: 400; color: var(--muted); margin-top: 1px; line-height: 1.3; }
 .scale-opt.active .sub { color: #6FA0E8; }
 
-/* stepper */
 .stepper {
   display: flex;
   align-items: center;
@@ -148,7 +145,6 @@ body {
   border-right: 1.5px solid var(--border);
 }
 
-/* behavior list */
 .beh-list { display: flex; flex-direction: column; gap: 4px; }
 .beh-chip {
   display: flex;
@@ -164,8 +160,7 @@ body {
 }
 .beh-chip .beh-num {
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
+  width: 18px; height: 18px;
   border-radius: 50%;
   background: var(--blue);
   color: #fff;
@@ -175,11 +170,7 @@ body {
   align-items: center;
   justify-content: center;
 }
-.beh-chip .beh-text {
-  flex: 1;
-  color: var(--text);
-  word-break: break-word;
-}
+.beh-chip .beh-text { flex: 1; color: var(--text); word-break: break-word; }
 .beh-chip .beh-del {
   flex-shrink: 0;
   background: none;
@@ -193,18 +184,8 @@ body {
   font-family: 'Nunito', sans-serif;
 }
 .beh-chip .beh-del:hover { color: var(--coral); }
-.beh-empty {
-  font-size: 11.5px;
-  color: var(--muted);
-  font-style: italic;
-  padding: 4px 2px;
-}
-.beh-count {
-  font-size: 10.5px;
-  color: var(--muted);
-  font-weight: 700;
-  margin-bottom: 7px;
-}
+.beh-empty { font-size: 11.5px; color: var(--muted); font-style: italic; padding: 4px 2px; }
+.beh-count { font-size: 10.5px; color: var(--muted); font-weight: 700; margin-bottom: 7px; }
 .beh-count .n { color: var(--blue); }
 .beh-count .n.max { color: var(--coral); }
 
@@ -227,7 +208,6 @@ body {
 }
 .btn-add:hover { background: #D9EAFF; }
 
-/* add-behavior popover */
 .popover-wrap { position: relative; }
 .popover {
   position: absolute;
@@ -262,25 +242,11 @@ body {
   color: var(--text);
   line-height: 1.3;
 }
-.popover-item:hover  { background: #EEF4FF; color: var(--blue); }
-.popover-item.dimmed { opacity: .4; cursor: not-allowed; pointer-events: none; }
-.popover-add-custom {
-  padding: 8px 12px;
-  border-top: 1.5px solid #F0F2F8;
-  font-size: 11.5px;
-  color: var(--muted);
-  font-weight: 600;
-  font-style: italic;
-}
+.popover-item:hover   { background: #EEF4FF; color: var(--blue); }
+.popover-item.dimmed  { opacity: .4; cursor: not-allowed; pointer-events: none; }
+.popover-add-custom { padding: 8px 12px; border-top: 1.5px solid #F0F2F8; font-size: 11.5px; color: var(--muted); font-weight: 600; font-style: italic; }
 
-/* sidebar actions */
-.sb-actions {
-  padding: 14px 16px;
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
+.sb-actions { padding: 14px 16px; margin-top: auto; display: flex; flex-direction: column; gap: 7px; }
 .sb-btn {
   font-family: 'Nunito', sans-serif;
   font-size: 13px;
@@ -295,18 +261,11 @@ body {
   transition: box-shadow .15s, transform .12s;
   width: 100%;
 }
-.sb-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.12); }
-.sb-btn.primary { background: var(--blue);   color: #fff; }
+.sb-btn:hover   { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+.sb-btn.primary { background: var(--blue); color: #fff; }
 .sb-btn.ghost   { background: #F7F8FC; color: var(--text); border: 1.5px solid var(--border); }
 
-/* zoom bar */
-.zoom-bar {
-  padding: 8px 16px;
-  border-bottom: 1.5px solid #F1F3F7;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.zoom-bar { padding: 8px 16px; border-bottom: 1.5px solid #F1F3F7; display: flex; align-items: center; gap: 8px; }
 .zoom-bar label { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
 input[type="range"].zoom-slider {
   -webkit-appearance: none;
@@ -325,7 +284,7 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
 }
 .zoom-val { font-size: 11px; font-weight: 700; color: var(--blue); min-width: 30px; }
 
-/* ─── Card Stage ─────────────────────────────────── */
+/* Card stage */
 .card-stage {
   flex: 1;
   overflow: auto;
@@ -335,13 +294,9 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
   padding: 28px 24px 40px;
   background: var(--bg);
 }
+.card-wrap { transform-origin: top center; }
 
-.card-wrap {
-  transform-origin: top center;
-  /* JS sets transform: scale() */
-}
-
-/* ─── THE CARD ───────────────────────────────────── */
+/* ── THE CARD ───────────────────────────────── */
 .cico-card {
   width: 11in;
   height: 8.5in;
@@ -354,112 +309,67 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
   font-family: 'Nunito', sans-serif;
   color: #111;
 }
-
-/* ── Card: Header bar ── */
 .card-top {
   background: var(--blue);
   padding: 11px 22px 10px;
   display: flex;
   align-items: center;
-  gap: 0;
   flex-shrink: 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 .card-logo {
-  font-size: 13px;
-  font-weight: 900;
+  font-size: 13px; font-weight: 900;
   color: rgba(255,255,255,.75);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-right: 14px;
-  flex-shrink: 0;
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-right: 14px; flex-shrink: 0;
 }
-.card-name {
-  font-size: 22px;
-  font-weight: 900;
-  color: #fff;
-  flex: 1;
-  letter-spacing: -.3px;
-}
-.card-meta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-}
-.card-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(255,255,255,.88);
-}
-.card-meta-item .label { opacity: .7; font-weight: 600; }
-
-/* ── Card: editable inline inputs (on colored header) ── */
+.card-name { font-size: 22px; font-weight: 900; color: #fff; flex: 1; letter-spacing: -.3px; }
+.card-meta { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+.card-meta-item { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.88); }
+.card-meta-item .label { opacity: .7; }
 .ce-white {
   display: inline-block;
-  color: #fff;
-  outline: none;
+  color: #fff; outline: none;
   border-bottom: 1.5px solid transparent;
-  padding-bottom: 1px;
-  cursor: text;
+  padding-bottom: 1px; cursor: text;
   transition: border-color .15s, background .15s;
-  border-radius: 3px;
-  min-width: 10px;
+  border-radius: 3px; min-width: 10px;
 }
 .ce-white:hover  { border-bottom-color: rgba(255,255,255,.45); }
 .ce-white:focus  { border-bottom-color: rgba(255,255,255,.9); background: rgba(255,255,255,.08); }
 .ce-white:empty::before { content: attr(data-ph); color: rgba(255,255,255,.4); pointer-events: none; }
-
-/* selects / date inputs on header */
 .hdr-select, .hdr-date {
   font-family: 'Nunito', sans-serif;
-  background: transparent;
-  border: none;
+  background: transparent; border: none;
   border-bottom: 1.5px solid transparent;
   color: rgba(255,255,255,.88);
-  font-size: 12px;
-  font-weight: 600;
-  outline: none;
-  padding: 0 2px 1px;
-  cursor: pointer;
-  transition: border-color .15s;
+  font-size: 12px; font-weight: 600;
+  outline: none; padding: 0 2px 1px;
+  cursor: pointer; transition: border-color .15s;
   -webkit-appearance: none;
 }
 .hdr-select:hover, .hdr-date:hover { border-bottom-color: rgba(255,255,255,.45); }
 .hdr-select:focus, .hdr-date:focus { border-bottom-color: rgba(255,255,255,.9); }
 .hdr-select option { background: var(--blue); color: #fff; }
-
-/* date separator */
 .date-sep { color: rgba(255,255,255,.5); font-size: 11px; }
 
-/* ── Card: Goal bar ── */
 .card-goal-bar {
   background: #FFF8E6;
   border-bottom: 1.5px solid #FFE082;
   padding: 7px 22px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #7A5C00;
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 700; color: #7A5C00;
   flex-shrink: 0;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 .goal-pct-input {
   font-family: 'Nunito', sans-serif;
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--blue);
-  background: transparent;
-  border: none;
+  font-size: 13px; font-weight: 800; color: var(--blue);
+  background: transparent; border: none;
   border-bottom: 1.5px solid #FFD54F;
-  width: 40px;
-  text-align: center;
-  outline: none;
-  padding: 0 2px 1px;
-  -moz-appearance: textfield;
+  width: 40px; text-align: center; outline: none;
+  padding: 0 2px 1px; -moz-appearance: textfield;
   transition: border-color .15s;
 }
 .goal-pct-input:focus { border-bottom-color: var(--blue); }
@@ -468,198 +378,89 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
 .goal-calc { color: var(--blue); font-weight: 800; }
 .scale-pill {
   margin-left: auto;
-  background: #FFF0B3;
-  border: 1.5px solid #FFD54F;
-  border-radius: 99px;
-  padding: 2px 10px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #7A5C00;
+  background: #FFF0B3; border: 1.5px solid #FFD54F;
+  border-radius: 99px; padding: 2px 10px;
+  font-size: 11px; font-weight: 700; color: #7A5C00;
 }
 
-/* ── Card: Check-in bar ── */
 .card-checkin-bar {
-  background: #F0F6FF;
-  border-bottom: 1.5px solid #C8DCFC;
+  background: #F0F6FF; border-bottom: 1.5px solid #C8DCFC;
   padding: 6px 22px;
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #3A5A8C;
+  display: flex; align-items: center; gap: 22px;
+  font-size: 11.5px; font-weight: 700; color: #3A5A8C;
   flex-shrink: 0;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
-.checkin-badge {
-  font-size: 10.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  color: var(--blue);
-}
-.ci-field {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-}
-.ci-line {
-  width: 80px;
-  border-bottom: 1.5px solid #90AAC8;
-  height: 14px;
-}
+.checkin-badge { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--blue); }
+.ci-field { display: flex; align-items: baseline; gap: 5px; }
+.ci-line { width: 80px; border-bottom: 1.5px solid #90AAC8; height: 14px; }
 
-/* ── Card: Grid ── */
+/* Grid */
 .card-grid-wrap {
-  flex: 1;
-  overflow: hidden;
+  flex: 1; overflow: hidden;
   margin: 6px 14px 6px;
   border: 2px solid #C4D4EC;
   border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+  display: flex; flex-direction: column;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
-
-.behavior-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  height: 100%;
-}
-
-/* Header row */
+.behavior-table { width: 100%; border-collapse: collapse; table-layout: fixed; height: 100%; }
 .behavior-table thead tr {
   background: var(--blue);
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 .behavior-table thead th {
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 7px 6px;
-  text-align: center;
+  color: #fff; font-size: 11px; font-weight: 700;
+  padding: 7px 6px; text-align: center;
   border-right: 1px solid rgba(255,255,255,.22);
   vertical-align: middle;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
-.behavior-table thead th:first-child {
-  text-align: left;
-  padding-left: 12px;
-  font-size: 11.5px;
-  width: 28%;
-}
-.behavior-table thead th:last-child {
-  border-right: none;
-  font-size: 10.5px;
-  width: 6%;
-}
-
-/* Period header — contenteditable */
+.behavior-table thead th:first-child { text-align: left; padding-left: 12px; font-size: 11.5px; width: 28%; }
+.behavior-table thead th:last-child  { border-right: none; font-size: 10.5px; width: 6%; }
 .th-period {
-  outline: none;
-  cursor: text;
-  display: block;
-  border-radius: 3px;
-  transition: background .12s;
-  padding: 1px 2px;
+  outline: none; cursor: text; display: block;
+  border-radius: 3px; transition: background .12s; padding: 1px 2px;
 }
-.th-period:hover  { background: rgba(255,255,255,.12); }
-.th-period:focus  { background: rgba(255,255,255,.2); outline: none; }
+.th-period:hover { background: rgba(255,255,255,.12); }
+.th-period:focus { background: rgba(255,255,255,.2); outline: none; }
 .th-period:empty::before { content: attr(data-ph); opacity: .5; pointer-events: none; }
 
-/* Scale subheader — single compact row */
 .scale-subrow td {
-  background: #EEF4FF;
-  font-size: 9.5px;
-  font-weight: 700;
-  color: var(--blue);
-  padding: 4px 12px;
-  border-bottom: 1.5px solid #C3D4F5;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+  background: #EEF4FF; font-size: 9.5px; font-weight: 700; color: var(--blue);
+  padding: 4px 12px; border-bottom: 1.5px solid #C3D4F5;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
-.scale-subrow td:first-child {
-  color: var(--muted);
-  font-weight: 700;
-  border-right: 1px solid #C3D4F5;
-  text-transform: uppercase;
-  font-size: 9px;
-  letter-spacing: .4px;
-}
+.scale-subrow td:first-child { color: var(--muted); font-weight: 700; border-right: 1px solid #C3D4F5; text-transform: uppercase; font-size: 9px; letter-spacing: .4px; }
 .scale-subrow td.scale-legend { text-align: center; }
 
-/* Behavior rows */
-.beh-row { height: 1px; /* browser distributes evenly when table has height:100% */ }
+.beh-row { height: 1px; }
 .beh-row td {
-  padding: 0 6px;
-  border-right: 1px solid #D8E4F2;
+  padding: 0 6px; border-right: 1px solid #D8E4F2;
   border-bottom: 1px solid #D8E4F2;
-  vertical-align: middle;
-  font-size: 11px;
-  height: inherit;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+  vertical-align: middle; font-size: 11px; height: inherit;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 .beh-row:nth-child(odd)  td { background: #F4F8FF; }
 .beh-row:nth-child(even) td { background: #fff; }
 .beh-row:hover td { background: #EBF2FF !important; }
 .beh-row td:last-child { border-right: none; }
-.beh-row td.beh-name-cell {
-  padding: 6px 8px 6px 12px;
-  font-weight: 600;
-  font-size: 11px;
-  width: 28%;
-  position: relative;
-  cursor: text;
-  border-right: 2px solid #C4D4EC;
-}
+.beh-row td.beh-name-cell { padding: 6px 8px 6px 12px; font-weight: 600; font-size: 11px; width: 28%; position: relative; cursor: text; border-right: 2px solid #C4D4EC; }
 .beh-row td.score-cell { text-align: center; }
-.beh-row td.total-cell {
-  text-align: center;
-  font-weight: 700;
-  font-size: 11px;
-  color: #3A86FF;
-  border-left: 2px solid #C4D4EC;
-  border-right: none;
-}
-
-/* Contenteditable behavior name */
+.beh-row td.total-cell { text-align: center; font-weight: 700; font-size: 11px; color: #3A86FF; border-left: 2px solid #C4D4EC; border-right: none; }
 .ce-beh {
-  outline: none;
-  display: block;
-  line-height: 1.35;
-  min-width: 20px;
-  border-radius: 3px;
-  padding: 2px 24px 2px 2px;
-  transition: background .1s;
+  outline: none; display: block; line-height: 1.35;
+  min-width: 20px; border-radius: 3px;
+  padding: 2px 24px 2px 2px; transition: background .1s;
 }
-.ce-beh:hover  { background: rgba(58,134,255,.06); }
-.ce-beh:focus  { background: rgba(58,134,255,.08); }
-.ce-beh:empty::before {
-  content: attr(data-ph);
-  color: #aab;
-  pointer-events: none;
-  font-style: italic;
-}
-
-/* row delete button */
+.ce-beh:hover { background: rgba(58,134,255,.06); }
+.ce-beh:focus { background: rgba(58,134,255,.08); }
+.ce-beh:empty::before { content: attr(data-ph); color: #aab; pointer-events: none; font-style: italic; }
 .row-del {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  color: #CBD5E1;
-  opacity: 0;
-  transition: opacity .12s, color .12s;
-  line-height: 1;
-  padding: 0;
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  font-size: 14px; color: #CBD5E1; opacity: 0;
+  transition: opacity .12s, color .12s; line-height: 1; padding: 0;
   font-family: 'Nunito', sans-serif;
 }
 .beh-row:hover .row-del { opacity: 1; }
@@ -667,350 +468,587 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
 
 /* Positive comments row */
 .max-row td {
-  background: #F0F9F0;
-  border-top: 2px solid #B5D9B5;
-  border-right: none;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+  background: #F0F9F0; border-top: 2px solid #B5D9B5; border-right: none;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 .max-row td.pos-label {
   padding: 7px 10px 7px 12px;
   border-right: 2px solid #B5D9B5;
-  vertical-align: middle;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  vertical-align: middle; white-space: nowrap;
+  display: flex; align-items: center; gap: 6px;
 }
 .pos-icon  { font-size: 14px; line-height: 1; }
 .pos-title { font-size: 11px; font-weight: 800; color: #2D6A2D; letter-spacing: .1px; }
-.max-row td.pos-comment {
-  padding: 7px 14px 7px 12px;
-  vertical-align: middle;
-}
-.pos-prompt {
-  font-size: 10px;
-  font-weight: 700;
-  color: #5A8A5A;
-  font-style: italic;
-  margin-right: 10px;
-}
-.pos-line {
-  display: inline-block;
-  width: calc(100% - 10px);
-  border-bottom: 1.5px solid #9DC59D;
-  vertical-align: bottom;
-  margin-top: 4px;
-}
+.max-row td.pos-comment { padding: 7px 14px 7px 12px; vertical-align: middle; }
+.pos-prompt { font-size: 10px; font-weight: 700; color: #5A8A5A; font-style: italic; margin-right: 10px; }
+.pos-line { display: inline-block; width: calc(100% - 10px); border-bottom: 1.5px solid #9DC59D; vertical-align: bottom; margin-top: 4px; }
 
-/* Add behavior inline button */
-.add-beh-row td {
-  padding: 4px 12px;
-  border-top: 1.5px dashed #C4D4EC;
-  background: #FAFBFF;
-}
+.add-beh-row td { padding: 4px 12px; border-top: 1.5px dashed #C4D4EC; background: #FAFBFF; }
 .add-beh-inline {
-  background: none;
-  border: none;
-  font-family: 'Nunito', sans-serif;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #90BDF9;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 0;
-  transition: color .12s;
+  background: none; border: none;
+  font-family: 'Nunito', sans-serif; font-size: 11.5px; font-weight: 700;
+  color: #90BDF9; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  padding: 2px 0; transition: color .12s;
 }
 .add-beh-inline:hover { color: var(--blue); }
 
-/* ── Card: Check-out bar ── */
 .card-checkout-bar {
-  background: #FFF5F5;
-  border-top: 1.5px solid #FFC8C8;
+  background: #FFF5F5; border-top: 1.5px solid #FFC8C8;
   padding: 7px 22px;
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #8C3A3A;
+  display: flex; align-items: center; gap: 22px;
+  font-size: 11.5px; font-weight: 700; color: #8C3A3A;
   flex-shrink: 0;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
-.checkout-badge {
-  font-size: 10.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  color: var(--coral);
-}
-.co-field {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-}
-.co-line {
-  border-bottom: 1.5px solid #F4A0A0;
-  height: 14px;
-}
-.co-line.sm  { width: 44px; }
-.co-line.med { width: 90px; }
-.co-line.lg  { width: 130px; }
+.checkout-badge { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--coral); }
+.co-field { display: flex; align-items: baseline; gap: 5px; }
+.co-line { border-bottom: 1.5px solid #F4A0A0; height: 14px; }
+.co-line.sm { width: 44px; } .co-line.lg { width: 130px; }
 
-/* ─── Force color print on colored elements ─────── */
-.card-top,
-.card-goal-bar,
-.card-checkin-bar,
-.card-checkout-bar,
-.behavior-table thead tr,
-.behavior-table thead th,
-.scale-subrow td,
-.beh-row:nth-child(odd) td,
-.max-row td,
-.pos-label,
-.pos-comment {
+/* Force print colors */
+.card-top, .card-goal-bar, .card-checkin-bar, .card-checkout-bar,
+.behavior-table thead tr, .behavior-table thead th,
+.scale-subrow td, .beh-row:nth-child(odd) td, .max-row td, .pos-label, .pos-comment {
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
 
-/* ─── Print ──────────────────────────────────────── */
+/* ── Print ──────────────────────────────────────── */
 @media print {
   @page { size: 11in 8.5in; margin: 0; }
-
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   body { overflow: visible !important; background: #fff !important; }
-  .app-header, .sidebar { display: none !important; }
-  .workspace { overflow: visible; height: auto; }
+  .app-header, .card-sidebar { display: none !important; }
+  #viewCard { overflow: visible !important; }
+  #viewTracker { display: none !important; }
   .card-stage { padding: 0; overflow: visible; background: #fff; display: block; }
   .card-wrap  { transform: none !important; width: auto !important; height: auto !important; }
-
-  .cico-card {
-    width: 11in !important;
-    height: 8.5in !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
-
-  .card-top {
-    background: #3A86FF !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  .card-goal-bar {
-    background: #FFF8E6 !important;
-    border-bottom: 1.5px solid #FFE082 !important;
-  }
-  .card-checkin-bar {
-    background: #F0F6FF !important;
-    border-bottom: 1.5px solid #C8DCFC !important;
-  }
-  .card-checkout-bar {
-    background: #FFF5F5 !important;
-    border-top: 1.5px solid #FFC8C8 !important;
-  }
-
-  .card-grid-wrap {
-    border: 2px solid #C4D4EC !important;
-    margin: 6px 14px !important;
-  }
-
+  .cico-card  { width: 11in !important; height: 8.5in !important; border-radius: 0 !important; box-shadow: none !important; border: none !important; }
+  .card-top         { background: #3A86FF !important; }
+  .card-goal-bar    { background: #FFF8E6 !important; border-bottom: 1.5px solid #FFE082 !important; }
+  .card-checkin-bar { background: #F0F6FF !important; border-bottom: 1.5px solid #C8DCFC !important; }
+  .card-checkout-bar { background: #FFF5F5 !important; border-top: 1.5px solid #FFC8C8 !important; }
+  .card-grid-wrap   { border: 2px solid #C4D4EC !important; margin: 6px 14px !important; }
   .behavior-table thead tr  { background: #3A86FF !important; }
   .behavior-table thead th  { color: #fff !important; border-right: 1px solid rgba(255,255,255,.3) !important; }
   .scale-subrow td          { background: #EEF4FF !important; border-bottom: 1.5px solid #C3D4F5 !important; }
-  .beh-row:nth-child(odd) td { background: #F4F8FF !important; }
+  .beh-row:nth-child(odd) td  { background: #F4F8FF !important; }
   .beh-row:nth-child(even) td { background: #fff !important; }
   .beh-row td               { border-right: 1px solid #D8E4F2 !important; border-bottom: 1px solid #D8E4F2 !important; }
   .beh-row td.beh-name-cell { border-right: 2px solid #C4D4EC !important; }
   .beh-row td.total-cell    { border-left: 2px solid #C4D4EC !important; }
   .max-row td               { background: #F0F9F0 !important; border-top: 2px solid #B5D9B5 !important; }
   .max-row td.pos-label     { border-right: 2px solid #B5D9B5 !important; }
-  .pos-line                 { border-bottom: 1.5px solid #9DC59D !important; }
-
-  .row-del, .add-beh-row { display: none !important; }
-  .ce-beh:empty::before  { display: none !important; }
-  .th-period:empty::before { display: none !important; }
+  .row-del, .add-beh-row    { display: none !important; }
+  .ce-beh:empty::before, .th-period:empty::before { display: none !important; }
 }
+
+/* ════════════════════════════════════════════════
+   PROGRESS TRACKER
+════════════════════════════════════════════════ */
+.tracker-workspace {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  flex: 1;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Shared panel */
+.panel {
+  background: var(--white);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.panel-title {
+  font-size: 13.5px; font-weight: 800;
+  padding: 12px 16px 10px;
+  border-bottom: 1.5px solid #F1F4FA;
+  display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Roster panel */
+.roster-panel {
+  width: 210px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.roster-list {
+  flex: 1; overflow-y: auto;
+  padding: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.student-item {
+  padding: 9px 10px; border-radius: 8px;
+  cursor: pointer; border: 1.5px solid transparent;
+  transition: background .12s, border-color .12s;
+  margin-bottom: 4px;
+}
+.student-item:hover  { background: #F0F5FF; border-color: #C8D9FF; }
+.student-item.active { background: #EEF4FF; border-color: var(--blue); }
+.student-item-name { font-size: 13px; font-weight: 800; color: var(--text); }
+.student-item-sub  { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+.roster-empty { font-size: 12px; color: var(--muted); font-style: italic; padding: 8px 2px; }
+.btn-add-student {
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px; font-weight: 700;
+  margin: 8px; padding: 9px 0;
+  border-radius: 8px; border: 1.5px dashed #90BDF9;
+  background: #F0F7FF; color: var(--blue);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background .12s; flex-shrink: 0;
+}
+.btn-add-student:hover { background: #DDE9FF; }
+.btn-add-student:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Center panel */
+.center-panel {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.stats-bar {
+  display: flex; gap: 8px; padding: 10px 14px;
+  border-bottom: 1.5px solid #F1F4FA; flex-shrink: 0;
+}
+.stat-card {
+  flex: 1; background: #F7F9FF;
+  border: 1.5px solid #E0E8F8; border-radius: 8px;
+  padding: 7px 6px 6px; text-align: center; min-width: 0;
+}
+.stat-icon  { font-size: 15px; line-height: 1.2; }
+.stat-val   { font-size: 18px; font-weight: 900; color: var(--blue); line-height: 1.1; }
+.stat-label { font-size: 9.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; margin-top: 2px; }
+.stats-empty { font-size: 12px; color: var(--muted); font-style: italic; margin: auto; }
+
+.tree-area {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  position: relative; padding: 10px 0 6px; min-height: 0;
+}
+.tree-svg { width: 250px; height: 250px; display: block; flex-shrink: 0; }
+.tree-svg.celebrating { animation: treeBounce .75s ease-in-out; }
+.stage-info { text-align: center; margin-top: 6px; flex-shrink: 0; }
+.stage-label { font-size: 13px; font-weight: 800; color: var(--text); }
+.progress-track {
+  width: 180px; height: 7px;
+  background: #E8EDF5; border-radius: 99px;
+  overflow: hidden; margin: 6px auto 3px;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--mint));
+  border-radius: 99px;
+  transition: width .7s cubic-bezier(.34,1.56,.64,1);
+}
+.progress-text { font-size: 10.5px; color: var(--muted); font-weight: 700; }
+
+.celeb-overlay { position: absolute; inset: 0; pointer-events: none; display: none; z-index: 30; }
+.sparkle { position: absolute; animation: sparkleUp 1.8s ease-out forwards; user-select: none; }
+
+@keyframes treeBounce {
+  0%,100% { transform: scale(1) rotate(0deg); }
+  20%     { transform: scale(1.1) rotate(-3deg); }
+  40%     { transform: scale(1.06) rotate(3deg); }
+  65%     { transform: scale(1.03) rotate(-1deg); }
+  82%     { transform: scale(1.01) rotate(.5deg); }
+}
+@keyframes sparkleUp {
+  0%   { opacity: 0; transform: translateY(0) scale(.4); }
+  18%  { opacity: 1; transform: translateY(-12px) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-75px) scale(.6); }
+}
+
+/* Right panel */
+.right-panel {
+  width: 268px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 10px;
+  overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+.entry-panel { display: flex; flex-direction: column; flex-shrink: 0; }
+.no-student-msg { padding: 18px 16px; font-size: 12.5px; color: var(--muted); font-style: italic; text-align: center; }
+.entry-form { padding: 10px 14px 14px; display: flex; flex-direction: column; gap: 9px; }
+.entry-form .f-label {
+  display: block; font-size: 10.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .4px;
+  color: var(--muted); margin-bottom: 4px;
+}
+.entry-form input, .entry-form textarea, .entry-form select {
+  font-family: 'Nunito', sans-serif; font-size: 13px;
+  width: 100%; padding: 7px 9px;
+  border: 1.5px solid var(--border); border-radius: 7px;
+  outline: none; background: #fff; color: var(--text);
+  transition: border-color .15s, box-shadow .15s;
+}
+.entry-form input:focus, .entry-form textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(58,134,255,.12); }
+.entry-form textarea { resize: none; }
+.two-col-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.score-preview {
+  display: flex; align-items: center; gap: 10px;
+  background: #F7F9FF; border: 1.5px solid #E0E8F8;
+  border-radius: 8px; padding: 8px 12px;
+}
+.pct-big { font-size: 22px; font-weight: 900; color: var(--blue); }
+.badge { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 99px; }
+.badge.met  { background: #D0FAF0; color: #059D74; }
+.badge.miss { background: #FFE5E5; color: #CC3333; }
+.btn-save {
+  font-family: 'Nunito', sans-serif; font-size: 13.5px; font-weight: 800;
+  padding: 10px; background: var(--blue); color: #fff;
+  border: none; border-radius: 8px; cursor: pointer;
+  transition: box-shadow .15s, transform .12s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-save:hover { box-shadow: 0 5px 16px rgba(58,134,255,.35); transform: translateY(-1px); }
+
+.trend-panel { flex-shrink: 0; }
+.trend-toggle {
+  font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800;
+  padding: 11px 14px; background: none; border: none;
+  cursor: pointer; width: 100%;
+  display: flex; justify-content: space-between; align-items: center;
+  color: var(--text); transition: background .12s;
+}
+.trend-toggle:hover { background: #F7F9FF; }
+.trend-content { padding: 0 12px 12px; }
+.no-chart-msg { font-size: 12px; color: var(--muted); font-style: italic; text-align: center; padding: 8px 0; }
+.chart-wrap { height: 155px; position: relative; margin-bottom: 10px; }
+.log-table-wrap { max-height: 180px; overflow-y: auto; border-radius: 6px; border: 1.5px solid #EEF1F6; }
+.log-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+.log-tbl thead th {
+  background: #EEF4FF; color: var(--blue);
+  font-size: 10px; font-weight: 700;
+  padding: 5px 6px; text-align: left;
+  border-bottom: 1.5px solid #D0E2FF;
+  white-space: nowrap; position: sticky; top: 0;
+}
+.log-tbl tbody td { padding: 5px 6px; border-bottom: 1px solid #F1F4FA; vertical-align: top; }
+.log-tbl tbody tr:last-child td { border-bottom: none; }
+.log-tbl tbody tr:hover td { background: #F7F9FF; }
+.met-text  { color: #059D74; font-weight: 700; }
+.miss-text { color: var(--coral); font-weight: 700; }
+.notes-cell { color: var(--muted); font-style: italic; max-width: 90px; word-break: break-word; }
+.no-logs { font-size: 11.5px; color: var(--muted); font-style: italic; padding: 8px; text-align: center; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(30,41,59,.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; backdrop-filter: blur(2px);
+}
+.modal { background: #fff; border-radius: 14px; box-shadow: 0 8px 40px rgba(30,41,59,.2); width: 340px; overflow: hidden; }
+.modal-header { background: var(--blue); color: #fff; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-size: 15px; font-weight: 800; }
+.modal-close {
+  background: rgba(255,255,255,.15); border: none; color: #fff;
+  font-size: 14px; cursor: pointer; border-radius: 50%;
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s; font-family: 'Nunito', sans-serif;
+}
+.modal-close:hover { background: rgba(255,255,255,.25); }
+.modal-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 11px; }
+.modal-body label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 4px; }
+.modal-body input, .modal-body select {
+  font-family: 'Nunito', sans-serif; font-size: 13.5px;
+  width: 100%; padding: 8px 10px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.modal-body input:focus, .modal-body select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(58,134,255,.12); }
+.modal-body .hint { font-size: 10.5px; color: var(--muted); margin-top: 3px; }
+.modal-footer { padding: 12px 18px; border-top: 1.5px solid #F1F4FA; display: flex; gap: 8px; justify-content: flex-end; }
+.btn-modal { font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer; transition: box-shadow .15s, transform .12s; }
+.btn-modal:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+.btn-modal.ghost   { background: #F1F4FA; color: var(--text); }
+.btn-modal.primary { background: var(--blue); color: #fff; }
+
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9px; }
 </style>
 </head>
 <body>
 
 <header class="app-header">
-  <span class="logo">📋</span>
+  <span class="logo" id="headerLogo">📋</span>
   <div>
-    <h1>CICO Card Creator</h1>
-    <p>Check-In Check-Out Behavior Support Card</p>
+    <h1 id="headerTitle">CICO Card Creator</h1>
+    <p id="headerSub">Check-In Check-Out Behavior Support Card</p>
   </div>
   <nav class="app-nav">
-    <a href="index.html" class="nav-tab active">📋 Card Creator</a>
-    <a href="tracker.html" class="nav-tab">🌱 Progress Tracker</a>
+    <button class="nav-tab active" data-tab="card"    onclick="switchTab('card')">📋 Card Creator</button>
+    <button class="nav-tab"        data-tab="tracker" onclick="switchTab('tracker')">🌱 Progress Tracker</button>
   </nav>
 </header>
 
-<div class="workspace">
+<!-- ══════════════ VIEW: CARD CREATOR ══════════════ -->
+<div id="viewCard" class="view" style="display:flex">
+  <div style="display:flex;flex:1;overflow:hidden">
 
-  <!-- ══ SIDEBAR ══════════════════════════════════════ -->
-  <aside class="sidebar">
+    <aside class="card-sidebar">
+      <div class="zoom-bar">
+        <label>Zoom</label>
+        <input type="range" class="zoom-slider" id="zoomSlider" min="45" max="100" value="78" oninput="applyZoom(this.value)" />
+        <span class="zoom-val" id="zoomVal">78%</span>
+      </div>
+      <div class="sb-section">
+        <div class="sb-label">🔢 Point Scale</div>
+        <div class="scale-opts" id="scaleOpts">
+          <label class="scale-opt active">
+            <input type="radio" name="scale" value="0-2" checked />
+            <div><div>0 – 2</div><div class="sub">0 = No · 1 = Partial · 2 = Yes</div></div>
+          </label>
+          <label class="scale-opt">
+            <input type="radio" name="scale" value="0-3" />
+            <div><div>0 – 3</div><div class="sub">0 None · 1 Rarely · 2 Often · 3 Always</div></div>
+          </label>
+          <label class="scale-opt">
+            <input type="radio" name="scale" value="yn" />
+            <div><div>Yes / No</div><div class="sub">1 = Yes · 0 = No</div></div>
+          </label>
+        </div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-label">🕐 Periods</div>
+        <div class="stepper">
+          <button onclick="changePeriods(-1)">−</button>
+          <span id="periodDisplay">6</span>
+          <button onclick="changePeriods(1)">+</button>
+        </div>
+      </div>
+      <div class="sb-section" style="flex:1">
+        <div class="sb-label">✅ Behaviors</div>
+        <div class="beh-count">Selected: <span class="n" id="behCountDisplay">0</span> / 6</div>
+        <div class="beh-list" id="behList"></div>
+        <div class="popover-wrap" id="popoverWrap">
+          <button class="btn-add" id="btnAddBeh" onclick="togglePopover()">
+            <span style="font-size:15px;line-height:1">＋</span> Add behavior
+          </button>
+          <div class="popover" id="popover">
+            <input type="text" id="popoverSearch" placeholder="Search or type custom…"
+                   oninput="filterPopover(this.value)" onkeydown="popoverKeydown(event)" />
+            <div class="popover-list" id="popoverList"></div>
+            <div class="popover-add-custom" id="popoverCustomHint"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sb-actions">
+        <button class="sb-btn primary" onclick="window.print()">🖨️ Print Card</button>
+        <button class="sb-btn ghost" onclick="resetCard()">↩ Reset</button>
+      </div>
+    </aside>
 
-    <!-- Zoom -->
-    <div class="zoom-bar">
-      <label>Zoom</label>
-      <input type="range" class="zoom-slider" id="zoomSlider" min="45" max="100" value="78"
-             oninput="applyZoom(this.value)" />
-      <span class="zoom-val" id="zoomVal">78%</span>
-    </div>
-
-    <!-- Scale -->
-    <div class="sb-section">
-      <div class="sb-label">🔢 Point Scale</div>
-      <div class="scale-opts" id="scaleOpts">
-        <label class="scale-opt active">
-          <input type="radio" name="scale" value="0-2" checked />
-          <div>
-            <div>0 – 2</div>
-            <div class="sub">0 = No &nbsp;1 = Partial &nbsp;2 = Yes</div>
+    <div class="card-stage" id="cardStage" onclick="handleStageClick(event)">
+      <div class="card-wrap" id="cardWrap">
+        <div class="cico-card" id="cicoCard">
+          <div class="card-top">
+            <span class="card-logo">CICO</span>
+            <span class="card-name ce-white" id="cardName" contenteditable="true" data-ph="Student Name"
+                  oninput="cardState.studentName=this.textContent"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"></span>
+            <div class="card-meta">
+              <div class="card-meta-item">
+                <span class="label">Grade</span>
+                <select class="hdr-select" id="gradeSelect" onchange="cardState.grade=this.value">
+                  <option value="">—</option>
+                  <option>K</option><option>1</option><option>2</option><option>3</option>
+                  <option>4</option><option>5</option><option>6</option><option>7</option>
+                  <option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
+                </select>
+              </div>
+              <div class="card-meta-item">
+                <span class="label">Week of</span>
+                <input type="date" class="hdr-date" id="dateStart" onchange="cardState.dateStart=this.value;updateGoal()" />
+                <span class="date-sep">–</span>
+                <input type="date" class="hdr-date" id="dateEnd" onchange="cardState.dateEnd=this.value" />
+              </div>
+            </div>
           </div>
-        </label>
-        <label class="scale-opt">
-          <input type="radio" name="scale" value="0-3" />
-          <div>
-            <div>0 – 3</div>
-            <div class="sub">0 None · 1 Rarely · 2 Often · 3 Always</div>
+          <div class="card-goal-bar">
+            <span>⭐ Daily Goal: earn</span>
+            <input type="number" class="goal-pct-input" id="goalPctInput" value="80" min="1" max="100"
+                   oninput="cardState.goalPct=parseInt(this.value)||80;updateGoal()" />
+            <span>% =</span>
+            <span class="goal-calc" id="goalCalcText">configure behaviors to calculate</span>
+            <span class="scale-pill" id="scalePill">0–2 scale</span>
           </div>
-        </label>
-        <label class="scale-opt">
-          <input type="radio" name="scale" value="yn" />
-          <div>
-            <div>Yes / No</div>
-            <div class="sub">1 = Yes &nbsp; 0 = No</div>
+          <div class="card-checkin-bar">
+            <span class="checkin-badge">☀️ Morning Check-In</span>
+            <div class="ci-field"><span>Today's Goal:</span><div class="ci-line"></div></div>
+            <div class="ci-field"><span>Mentor Initials:</span><div class="ci-line"></div></div>
+            <div class="ci-field" style="margin-left:auto"><span>Mentor Note:</span><div class="ci-line" style="width:110px"></div></div>
           </div>
-        </label>
+          <div class="card-grid-wrap">
+            <table class="behavior-table" id="behaviorTable"></table>
+          </div>
+          <div class="card-checkout-bar">
+            <span class="checkout-badge">🌙 End-of-Day Check-Out</span>
+            <div class="co-field"><span>Points Earned:</span><div class="co-line sm"></div><span>/</span><div class="co-line sm"></div></div>
+            <div class="co-field"><span>Goal Met?</span><div class="co-line sm" style="width:55px"></div></div>
+            <div class="co-field" style="margin-left:auto"><span>Mentor Signature:</span><div class="co-line lg"></div></div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Periods -->
-    <div class="sb-section">
-      <div class="sb-label">🕐 Periods</div>
-      <div class="stepper">
-        <button onclick="changePeriods(-1)">−</button>
-        <span id="periodDisplay">6</span>
-        <button onclick="changePeriods(1)">+</button>
+  </div>
+</div>
+
+<!-- ══════════════ VIEW: PROGRESS TRACKER ══════════════ -->
+<div id="viewTracker" class="view" style="display:none">
+  <div class="tracker-workspace">
+
+    <aside class="roster-panel panel">
+      <div class="panel-title">👥 Student Roster</div>
+      <div class="roster-list" id="rosterList"></div>
+      <button class="btn-add-student" id="btnAddStudent" onclick="openStudentModal()">
+        <span style="font-size:16px;line-height:1">＋</span> Add Student
+      </button>
+    </aside>
+
+    <div class="center-panel panel">
+      <div class="stats-bar" id="statsBar">
+        <div class="stats-empty">Select a student to view their progress</div>
+      </div>
+      <div class="tree-area" id="treeArea">
+        <div class="celeb-overlay" id="celebOverlay"></div>
+        <svg id="treeSvg" viewBox="0 0 300 300" class="tree-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="stage-info">
+          <div class="stage-label" id="stageLabel">🌱 Add a student to get started</div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+          <div class="progress-text" id="progressText"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Behaviors -->
-    <div class="sb-section" style="flex:1">
-      <div class="sb-label">✅ Behaviors</div>
-      <div class="beh-count">
-        Selected: <span class="n" id="behCountDisplay">0</span> / 6
+    <div class="right-panel">
+      <div class="panel entry-panel">
+        <div class="panel-title">📝 Log Daily Entry</div>
+        <div class="no-student-msg" id="noStudentMsg">Select a student to log their daily scores.</div>
+        <div class="entry-form" id="entryForm" style="display:none">
+          <div>
+            <label class="f-label">Date</label>
+            <input type="date" id="fDate" />
+          </div>
+          <div class="two-col-form">
+            <div>
+              <label class="f-label">Points Earned</label>
+              <input type="number" id="fEarned" min="0" max="9999" placeholder="0" oninput="updateScorePreview()" />
+            </div>
+            <div>
+              <label class="f-label">Points Possible</label>
+              <input type="number" id="fPossible" min="1" max="9999" placeholder="84" oninput="updateScorePreview()" />
+            </div>
+          </div>
+          <div class="score-preview">
+            <span class="pct-big" id="fPctDisplay">—</span>
+            <div id="fGoalDisplay"></div>
+          </div>
+          <div>
+            <label class="f-label">Notes (optional)</label>
+            <textarea id="fNotes" rows="2" placeholder="Any observations about today…"></textarea>
+          </div>
+          <button class="btn-save" onclick="handleSaveEntry()">💾 Save Entry</button>
+        </div>
       </div>
-      <div class="beh-list" id="behList"></div>
-
-      <div class="popover-wrap" id="popoverWrap">
-        <button class="btn-add" id="btnAddBeh" onclick="togglePopover()">
-          <span style="font-size:15px;line-height:1">＋</span> Add behavior
+      <div class="panel trend-panel">
+        <button class="trend-toggle" onclick="toggleTrend()">
+          <span>📈 Progress Trend</span>
+          <span id="trendChevron">▼</span>
         </button>
-        <div class="popover" id="popover">
-          <input type="text" id="popoverSearch" placeholder="Search or type custom…"
-                 oninput="filterPopover(this.value)"
-                 onkeydown="popoverKeydown(event)" />
-          <div class="popover-list" id="popoverList"></div>
-          <div class="popover-add-custom" id="popoverCustomHint"></div>
+        <div class="trend-content" id="trendContent" style="display:none">
+          <p class="no-chart-msg" id="noChartMsg">Log some entries to see the trend chart.</p>
+          <div class="chart-wrap" id="chartWrap" style="display:none">
+            <canvas id="trendCanvas"></canvas>
+          </div>
+          <div class="log-table-wrap" id="logTableWrap"></div>
         </div>
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="sb-actions">
-      <button class="sb-btn primary" onclick="window.print()">🖨️ Print Card</button>
-      <button class="sb-btn ghost" onclick="resetAll()">↩ Reset</button>
+  </div>
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal-overlay" id="addStudentModal" style="display:none" onclick="modalOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👤 Add New Student</div>
+      <button class="modal-close" onclick="closeStudentModal()">✕</button>
     </div>
-
-  </aside>
-
-  <!-- ══ CARD STAGE ════════════════════════════════════ -->
-  <div class="card-stage" id="cardStage" onclick="handleStageClick(event)">
-    <div class="card-wrap" id="cardWrap">
-      <div class="cico-card" id="cicoCard">
-
-        <!-- Header -->
-        <div class="card-top">
-          <span class="card-logo">CICO</span>
-          <span class="card-name ce-white" id="cardName"
-                contenteditable="true" data-ph="Student Name"
-                oninput="state.studentName=this.textContent"
-                onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
-          ></span>
-          <div class="card-meta">
-            <div class="card-meta-item">
-              <span class="label">Grade</span>
-              <select class="hdr-select" id="gradeSelect" onchange="state.grade=this.value">
-                <option value="">—</option>
-                <option>K</option><option>1</option><option>2</option><option>3</option>
-                <option>4</option><option>5</option><option>6</option><option>7</option>
-                <option>8</option><option>9</option><option>10</option><option>11</option>
-                <option>12</option>
-              </select>
-            </div>
-            <div class="card-meta-item">
-              <span class="label">Week of</span>
-              <input type="date" class="hdr-date" id="dateStart" onchange="state.dateStart=this.value;updateGoal()" />
-              <span class="date-sep">–</span>
-              <input type="date" class="hdr-date" id="dateEnd" onchange="state.dateEnd=this.value" />
-            </div>
-          </div>
+    <div class="modal-body">
+      <div>
+        <label>First Name *</label>
+        <input type="text" id="mName" placeholder="e.g. Marcus" maxlength="30"
+               onkeydown="if(event.key==='Enter') handleAddStudent()" />
+      </div>
+      <div>
+        <label>Grade</label>
+        <select id="mGrade">
+          <option value="">—</option>
+          <option>K</option><option>1</option><option>2</option><option>3</option>
+          <option>4</option><option>5</option><option>6</option><option>7</option>
+          <option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label>Goal %</label>
+          <input type="number" id="mGoalPct" value="80" min="1" max="100" />
+          <div class="hint">e.g. 80</div>
         </div>
-
-        <!-- Goal bar -->
-        <div class="card-goal-bar">
-          <span>⭐ Daily Goal: earn</span>
-          <input type="number" class="goal-pct-input" id="goalPctInput"
-                 value="80" min="1" max="100"
-                 oninput="state.goalPct=parseInt(this.value)||80;updateGoal()" />
-          <span>% =</span>
-          <span class="goal-calc" id="goalCalcText">configure behaviors to calculate</span>
-          <span class="scale-pill" id="scalePill">0–2 scale</span>
+        <div>
+          <label>Points / Day</label>
+          <input type="number" id="mPoints" value="84" min="1" max="9999" />
+          <div class="hint">from CICO card</div>
         </div>
-
-        <!-- Check-in bar -->
-        <div class="card-checkin-bar">
-          <span class="checkin-badge">☀️ Morning Check-In</span>
-          <div class="ci-field"><span>Today's Goal:</span><div class="ci-line"></div></div>
-          <div class="ci-field"><span>Mentor Initials:</span><div class="ci-line"></div></div>
-          <div class="ci-field" style="margin-left:auto"><span>Mentor Note:</span><div class="ci-line" style="width:110px"></div></div>
-        </div>
-
-        <!-- Behavior Grid -->
-        <div class="card-grid-wrap">
-          <table class="behavior-table" id="behaviorTable">
-            <!-- Built by JS -->
-          </table>
-        </div>
-
-        <!-- Check-out bar -->
-        <div class="card-checkout-bar">
-          <span class="checkout-badge">🌙 End-of-Day Check-Out</span>
-          <div class="co-field"><span>Points Earned:</span><div class="co-line sm"></div><span>/</span><div class="co-line sm"></div></div>
-          <div class="co-field"><span>Goal Met?</span><div class="co-line sm" style="width:55px"></div></div>
-          <div class="co-field" style="margin-left:auto"><span>Mentor Signature:</span><div class="co-line lg"></div></div>
-        </div>
-
-      </div><!-- /cico-card -->
-    </div><!-- /card-wrap -->
-  </div><!-- /card-stage -->
-
-</div><!-- /workspace -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal ghost" onclick="closeStudentModal()">Cancel</button>
+      <button class="btn-modal primary" onclick="handleAddStudent()">Add Student</button>
+    </div>
+  </div>
+</div>
 
 <script>
-// ═══════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════
-const PRESETS = [
+// ════════════════════════════════════════════════
+// SHARED
+// ════════════════════════════════════════════════
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function switchTab(tab) {
+  document.getElementById('viewCard').style.display    = tab === 'card'    ? 'flex' : 'none';
+  document.getElementById('viewTracker').style.display = tab === 'tracker' ? 'flex' : 'none';
+  document.querySelectorAll('.nav-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.tab === tab));
+  const meta = {
+    card:    { logo:'📋', title:'CICO Card Creator',     sub:'Check-In Check-Out Behavior Support Card' },
+    tracker: { logo:'🌱', title:'CICO Progress Tracker', sub:'Behavior Intervention Monitoring' }
+  }[tab];
+  document.getElementById('headerLogo').textContent  = meta.logo;
+  document.getElementById('headerTitle').textContent = meta.title;
+  document.getElementById('headerSub').textContent   = meta.sub;
+  if (tab === 'tracker') trRenderAll();
+}
+
+// ════════════════════════════════════════════════
+// CARD CREATOR
+// ════════════════════════════════════════════════
+const CARD_PRESETS = [
   "Comes to class prepared",
   "Stays on task during instruction",
   "Follows directions the first time",
@@ -1029,58 +1067,20 @@ const SCALE_INFO = {
   'yn':  { max: 1, label: 'Yes / No',  sub: '1 = Yes · 0 = No' }
 };
 
-const state = {
-  studentName: '',
-  grade: '',
-  dateStart: '',
-  dateEnd: '',
-  goalPct: 80,
-  scale: '0-2',
+const cardState = {
+  studentName: '', grade: '', dateStart: '', dateEnd: '',
+  goalPct: 80, scale: '0-2',
   periods: 6,
   periodNames: Array.from({length:8}, (_,i) => `Period ${i+1}`),
   behaviors: []
 };
 
-// ═══════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════
-function init() {
-  // Default behaviors
-  state.behaviors = [
-    "Follows directions the first time",
-    "Stays on task during instruction",
-    "Uses respectful language",
-    "Completes assigned work"
-  ];
+let cardPopoverOpen = false;
 
-  // Default dates: current Mon–Fri
-  const today = new Date();
-  const d = today.getDay();
-  const mon = new Date(today);
-  mon.setDate(today.getDate() - (d === 0 ? 6 : d - 1));
-  const fri = new Date(mon);
-  fri.setDate(mon.getDate() + 4);
-  state.dateStart = toISO(mon);
-  state.dateEnd   = toISO(fri);
-  document.getElementById('dateStart').value = state.dateStart;
-  document.getElementById('dateEnd').value   = state.dateEnd;
-
-  buildScaleListeners();
-  rebuildGrid();
-  updateGoal();
-  syncSidebarBehaviors();
-  applyZoom(document.getElementById('zoomSlider').value);
-}
-
-function toISO(d) { return d.toISOString().split('T')[0]; }
-
-// ═══════════════════════════════════════════════════
-// SCALE LISTENERS
-// ═══════════════════════════════════════════════════
 function buildScaleListeners() {
   document.querySelectorAll('input[name="scale"]').forEach(r => {
     r.addEventListener('change', () => {
-      state.scale = r.value;
+      cardState.scale = r.value;
       document.querySelectorAll('.scale-opt').forEach(el =>
         el.classList.toggle('active', el.querySelector('input').value === r.value));
       rebuildGrid();
@@ -1089,45 +1089,35 @@ function buildScaleListeners() {
   });
 }
 
-// ═══════════════════════════════════════════════════
-// GRID BUILD
-// ═══════════════════════════════════════════════════
 function rebuildGrid() {
   const tbl   = document.getElementById('behaviorTable');
-  const info  = SCALE_INFO[state.scale];
-  const beh   = state.behaviors;
-  const pds   = state.periods;
-  const pNames = state.periodNames;
-
+  const info  = SCALE_INFO[cardState.scale];
+  const beh   = cardState.behaviors;
+  const pds   = cardState.periods;
+  const pNames = cardState.periodNames;
   tbl.innerHTML = '';
 
-  // ── thead ──
   const thead = tbl.createTHead();
   const hRow  = thead.insertRow();
-
-  const th0 = document.createElement('th');
+  const th0   = document.createElement('th');
   th0.textContent = 'Behavior';
   hRow.appendChild(th0);
-
   for (let p = 0; p < pds; p++) {
     const th = document.createElement('th');
     const ce = document.createElement('span');
     ce.className = 'th-period';
     ce.contentEditable = 'true';
     ce.dataset.ph = `Period ${p+1}`;
-    ce.dataset.index = p;
     ce.textContent = pNames[p];
-    ce.addEventListener('input', () => { state.periodNames[p] = ce.textContent.trim() || `Period ${p+1}`; });
+    ce.addEventListener('input', () => { cardState.periodNames[p] = ce.textContent.trim() || `Period ${p+1}`; });
     ce.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); ce.blur(); } });
     th.appendChild(ce);
     hRow.appendChild(th);
   }
-
   const thTot = document.createElement('th');
   thTot.textContent = 'Total';
   hRow.appendChild(thTot);
 
-  // scale sub-row — compact single line, two cells only
   const tbody = tbl.createTBody();
   const subRow = tbody.insertRow();
   subRow.className = 'scale-subrow';
@@ -1140,46 +1130,36 @@ function rebuildGrid() {
   sdLegend.textContent = info.sub;
   subRow.appendChild(sdLegend);
 
-  // ── behavior rows ──
   beh.forEach((b, idx) => {
     const row = tbody.insertRow();
     row.className = 'beh-row';
-
-    // behavior name cell
     const nameTd = document.createElement('td');
     nameTd.className = 'beh-name-cell';
-
     const ce = document.createElement('div');
     ce.className = 'ce-beh';
     ce.contentEditable = 'true';
     ce.dataset.ph = 'Behavior…';
     ce.textContent = b;
-    ce.dataset.index = idx;
-    ce.addEventListener('input', () => { state.behaviors[idx] = ce.textContent; syncSidebarBehaviors(); updateGoal(); });
+    ce.addEventListener('input', () => { cardState.behaviors[idx] = ce.textContent; syncSidebarBehaviors(); updateGoal(); });
     ce.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); ce.blur(); } });
     nameTd.appendChild(ce);
-
     const delBtn = document.createElement('button');
     delBtn.className = 'row-del';
-    delBtn.title = 'Remove';
     delBtn.innerHTML = '✕';
-    delBtn.onclick = (e) => { e.stopPropagation(); removeBehavior(idx); };
+    delBtn.onclick = e => { e.stopPropagation(); cardRemoveBehavior(idx); };
     nameTd.appendChild(delBtn);
     row.appendChild(nameTd);
-
-    // score cells
     for (let p = 0; p < pds; p++) {
       const td = document.createElement('td');
       td.className = 'score-cell';
       row.appendChild(td);
     }
-    // total cell
     const tot = document.createElement('td');
     tot.className = 'total-cell';
     row.appendChild(tot);
   });
 
-  // ── positive comments row ──
+  // Positive comments row
   const maxRow = tbody.insertRow();
   maxRow.className = 'max-row';
   const mLabel = document.createElement('td');
@@ -1192,7 +1172,6 @@ function rebuildGrid() {
   mComment.innerHTML = '<span class="pos-prompt">Share one thing this student did well today:</span><div class="pos-line"></div>';
   maxRow.appendChild(mComment);
 
-  // ── add-behavior inline ──
   if (beh.length < 6) {
     const addRow = tbody.insertRow();
     addRow.className = 'add-beh-row';
@@ -1201,51 +1180,39 @@ function rebuildGrid() {
     const addBtn = document.createElement('button');
     addBtn.className = 'add-beh-inline';
     addBtn.innerHTML = '<span style="font-size:13px">＋</span> Add behavior';
-    addBtn.onclick = (e) => { e.stopPropagation(); togglePopover(); };
+    addBtn.onclick = e => { e.stopPropagation(); togglePopover(); };
     addTd.appendChild(addBtn);
     addRow.appendChild(addTd);
   }
-
   updateGoal();
 }
 
-// ═══════════════════════════════════════════════════
-// GOAL CALCULATION
-// ═══════════════════════════════════════════════════
 function updateGoal() {
-  const info  = SCALE_INFO[state.scale];
-  const n     = state.behaviors.length;
-  const total = n * state.periods * info.max;
-  const goal  = total > 0 ? Math.round(total * state.goalPct / 100) : 0;
-
-  document.getElementById('goalCalcText').textContent =
-    n > 0 ? `${goal} out of ${total} points each day` : 'add behaviors to calculate';
+  const info  = SCALE_INFO[cardState.scale];
+  const n     = cardState.behaviors.length;
+  const total = n * cardState.periods * info.max;
+  const goal  = total > 0 ? Math.round(total * cardState.goalPct / 100) : 0;
+  document.getElementById('goalCalcText').textContent = n > 0 ? `${goal} out of ${total} points each day` : 'add behaviors to calculate';
   document.getElementById('scalePill').textContent = info.label;
 }
 
-// ═══════════════════════════════════════════════════
-// PERIODS
-// ═══════════════════════════════════════════════════
 function changePeriods(d) {
-  state.periods = Math.max(1, Math.min(8, state.periods + d));
-  document.getElementById('periodDisplay').textContent = state.periods;
+  cardState.periods = Math.max(1, Math.min(8, cardState.periods + d));
+  document.getElementById('periodDisplay').textContent = cardState.periods;
   rebuildGrid();
 }
 
-// ═══════════════════════════════════════════════════
-// BEHAVIORS
-// ═══════════════════════════════════════════════════
-function addBehavior(text) {
-  if (state.behaviors.length >= 6) return;
-  state.behaviors.push(text.trim());
+function cardAddBehavior(text) {
+  if (cardState.behaviors.length >= 6) return;
+  cardState.behaviors.push(text.trim());
   closePopover();
   rebuildGrid();
   syncSidebarBehaviors();
   updateGoal();
 }
 
-function removeBehavior(idx) {
-  state.behaviors.splice(idx, 1);
+function cardRemoveBehavior(idx) {
+  cardState.behaviors.splice(idx, 1);
   rebuildGrid();
   syncSidebarBehaviors();
   updateGoal();
@@ -1254,132 +1221,86 @@ function removeBehavior(idx) {
 function syncSidebarBehaviors() {
   const list  = document.getElementById('behList');
   const count = document.getElementById('behCountDisplay');
-  const n = state.behaviors.length;
+  const n = cardState.behaviors.length;
   count.textContent = n;
   count.className   = n >= 6 ? 'n max' : 'n';
-
   if (n === 0) {
     list.innerHTML = '<div class="beh-empty">No behaviors yet. Add one below.</div>';
   } else {
-    list.innerHTML = state.behaviors.map((b, i) => `
+    list.innerHTML = cardState.behaviors.map((b, i) => `
       <div class="beh-chip">
         <span class="beh-num">${i+1}</span>
         <span class="beh-text">${escHtml(b)}</span>
-        <button class="beh-del" onclick="removeBehavior(${i})" title="Remove">✕</button>
+        <button class="beh-del" onclick="cardRemoveBehavior(${i})" title="Remove">✕</button>
       </div>`).join('');
   }
-
-  // toggle add button visibility
   document.getElementById('btnAddBeh').style.display = n >= 6 ? 'none' : '';
 }
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// ═══════════════════════════════════════════════════
-// POPOVER
-// ═══════════════════════════════════════════════════
-let popoverOpen = false;
-
-function togglePopover() {
-  popoverOpen ? closePopover() : openPopover();
-}
-
+function togglePopover() { cardPopoverOpen ? closePopover() : openPopover(); }
 function openPopover() {
   const pop = document.getElementById('popover');
   const inp = document.getElementById('popoverSearch');
   pop.classList.add('open');
   inp.value = '';
   filterPopover('');
-  popoverOpen = true;
+  cardPopoverOpen = true;
   setTimeout(() => inp.focus(), 50);
 }
-
 function closePopover() {
   document.getElementById('popover').classList.remove('open');
-  popoverOpen = false;
+  cardPopoverOpen = false;
 }
-
 function filterPopover(q) {
   const list   = document.getElementById('popoverList');
   const hint   = document.getElementById('popoverCustomHint');
   const lower  = q.toLowerCase().trim();
-  const active = new Set(state.behaviors.map(b => b.toLowerCase()));
-
-  const filtered = PRESETS.filter(p =>
-    !lower || p.toLowerCase().includes(lower)
-  );
-
+  const active = new Set(cardState.behaviors.map(b => b.toLowerCase()));
+  const filtered = CARD_PRESETS.filter(p => !lower || p.toLowerCase().includes(lower));
   list.innerHTML = filtered.map(p => {
     const taken = active.has(p.toLowerCase());
     return `<div class="popover-item ${taken?'dimmed':''}"
-      onclick="${taken ? '' : `addBehavior(${JSON.stringify(p)})`}">${escHtml(p)}</div>`;
+      onclick="${taken ? '' : `cardAddBehavior(${JSON.stringify(p)})`}">${escHtml(p)}</div>`;
   }).join('');
-
-  hint.textContent = q.trim() && !PRESETS.some(p => p.toLowerCase() === lower)
-    ? `Press Enter to add: "${q.trim()}"` : '';
+  hint.textContent = q.trim() && !CARD_PRESETS.some(p => p.toLowerCase() === lower) ? `Press Enter to add: "${q.trim()}"` : '';
 }
-
 function popoverKeydown(e) {
-  if (e.key === 'Enter') {
-    const v = e.target.value.trim();
-    if (v) addBehavior(v);
-    e.preventDefault();
-  } else if (e.key === 'Escape') {
-    closePopover();
-  }
+  if (e.key === 'Enter') { const v = e.target.value.trim(); if (v) cardAddBehavior(v); e.preventDefault(); }
+  else if (e.key === 'Escape') { closePopover(); }
 }
 
-// ═══════════════════════════════════════════════════
-// STAGE CLICK (close popover if outside)
-// ═══════════════════════════════════════════════════
 function handleStageClick(e) {
-  if (popoverOpen && !document.getElementById('popoverWrap').contains(e.target)) {
-    closePopover();
-  }
+  if (cardPopoverOpen && !document.getElementById('popoverWrap').contains(e.target)) closePopover();
 }
 document.addEventListener('click', e => {
-  if (popoverOpen && !document.getElementById('popoverWrap').contains(e.target)) {
-    closePopover();
-  }
+  if (cardPopoverOpen && document.getElementById('popoverWrap') && !document.getElementById('popoverWrap').contains(e.target)) closePopover();
 });
 
-// ═══════════════════════════════════════════════════
-// ZOOM
-// ═══════════════════════════════════════════════════
 function applyZoom(val) {
   const scale = val / 100;
   document.getElementById('zoomVal').textContent = `${val}%`;
   const wrap = document.getElementById('cardWrap');
   wrap.style.transform = `scale(${scale})`;
-  // Give the stage enough height so scrolling works
-  const cardH = 816; // 8.5in at 96dpi
-  const cardW = 1056; // 11in at 96dpi
-  wrap.style.width  = cardW + 'px';
-  wrap.style.height = (cardH * scale) + 'px';
-  // expand stage to avoid clipping
-  document.getElementById('cardStage').style.minWidth = (cardW * scale + 48) + 'px';
+  wrap.style.width  = '1056px';
+  wrap.style.height = (816 * scale) + 'px';
 }
 
-// ═══════════════════════════════════════════════════
-// RESET
-// ═══════════════════════════════════════════════════
-function resetAll() {
+function toISO(d) { return d.toISOString().split('T')[0]; }
+
+function resetCard() {
   if (!confirm('Reset the card to defaults?')) return;
-  state.studentName = '';
-  state.grade = '';
-  state.goalPct = 80;
-  state.scale = '0-2';
-  state.periods = 6;
-  state.periodNames = Array.from({length:8}, (_,i) => `Period ${i+1}`);
-  state.behaviors = [
+  cardState.studentName = '';
+  cardState.grade = '';
+  cardState.goalPct = 80;
+  cardState.scale = '0-2';
+  cardState.periods = 6;
+  cardState.periodNames = Array.from({length:8}, (_,i) => `Period ${i+1}`);
+  cardState.behaviors = [
     "Follows directions the first time",
     "Stays on task during instruction",
     "Uses respectful language",
     "Completes assigned work"
   ];
-
   document.getElementById('cardName').textContent = '';
   document.getElementById('gradeSelect').value = '';
   document.getElementById('goalPctInput').value = 80;
@@ -1387,27 +1308,490 @@ function resetAll() {
   document.querySelectorAll('.scale-opt').forEach(el =>
     el.classList.toggle('active', el.querySelector('input').value === '0-2'));
   document.getElementById('periodDisplay').textContent = 6;
-
   const today = new Date();
   const d = today.getDay();
   const mon = new Date(today);
   mon.setDate(today.getDate() - (d === 0 ? 6 : d - 1));
   const fri = new Date(mon);
   fri.setDate(mon.getDate() + 4);
-  state.dateStart = toISO(mon);
-  state.dateEnd   = toISO(fri);
-  document.getElementById('dateStart').value = state.dateStart;
-  document.getElementById('dateEnd').value   = state.dateEnd;
-
+  cardState.dateStart = toISO(mon);
+  cardState.dateEnd   = toISO(fri);
+  document.getElementById('dateStart').value = cardState.dateStart;
+  document.getElementById('dateEnd').value   = cardState.dateEnd;
   rebuildGrid();
   syncSidebarBehaviors();
   updateGoal();
 }
 
-// ═══════════════════════════════════════════════════
+function initCard() {
+  cardState.behaviors = [
+    "Follows directions the first time",
+    "Stays on task during instruction",
+    "Uses respectful language",
+    "Completes assigned work"
+  ];
+  const today = new Date();
+  const d = today.getDay();
+  const mon = new Date(today);
+  mon.setDate(today.getDate() - (d === 0 ? 6 : d - 1));
+  const fri = new Date(mon);
+  fri.setDate(mon.getDate() + 4);
+  cardState.dateStart = toISO(mon);
+  cardState.dateEnd   = toISO(fri);
+  document.getElementById('dateStart').value = cardState.dateStart;
+  document.getElementById('dateEnd').value   = cardState.dateEnd;
+  buildScaleListeners();
+  rebuildGrid();
+  updateGoal();
+  syncSidebarBehaviors();
+  applyZoom(document.getElementById('zoomSlider').value);
+}
+
+// ════════════════════════════════════════════════
+// PROGRESS TRACKER
+// ════════════════════════════════════════════════
+const STORAGE_KEY = 'cico_tracker_v1';
+let trApp = { students: [], selectedId: null };
+
+function trLoad() {
+  try { const d = localStorage.getItem(STORAGE_KEY); if (d) trApp = JSON.parse(d); } catch {}
+}
+function trSave() { localStorage.setItem(STORAGE_KEY, JSON.stringify(trApp)); }
+function trUID()  { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function trToday(){ return new Date().toISOString().split('T')[0]; }
+function trFmt(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${parseInt(m)}/${parseInt(d)}/${y}`;
+}
+function trShort(iso) {
+  if (!iso) return '';
+  const [,m,d] = iso.split('-');
+  return `${parseInt(m)}/${parseInt(d)}`;
+}
+function trSelected() { return trApp.students.find(s => s.id === trApp.selectedId) || null; }
+
+function trStats(student) {
+  const logs = student.logs;
+  if (!logs.length) return { currentStreak:0, longestStreak:0, daysLogged:0, avgPct:0, goalMetDays:0 };
+  const asc  = [...logs].sort((a,b) => a.date < b.date ? -1 : 1);
+  const desc = [...asc].reverse();
+  let cur = 0;
+  for (let i = 0; i < desc.length; i++) {
+    if (!desc[i].goalMet) break;
+    if (i > 0 && (new Date(desc[i-1].date) - new Date(desc[i].date)) / 86400000 > 1) break;
+    cur++;
+  }
+  let longest = 0, tmp = 0;
+  for (let i = 0; i < asc.length; i++) {
+    if (!asc[i].goalMet) { tmp = 0; continue; }
+    if (i > 0 && asc[i-1].goalMet) {
+      tmp = (new Date(asc[i].date) - new Date(asc[i-1].date)) / 86400000 <= 1 ? tmp + 1 : 1;
+    } else { tmp = 1; }
+    longest = Math.max(longest, tmp);
+  }
+  return {
+    currentStreak: cur, longestStreak: longest,
+    daysLogged: logs.length,
+    avgPct: Math.round(logs.reduce((s,l) => s + l.pct, 0) / logs.length),
+    goalMetDays: logs.filter(l => l.goalMet).length
+  };
+}
+
+function trStage(days) { return days >= 20 ? 3 : days >= 10 ? 2 : days >= 5 ? 1 : 0; }
+
+function trGenerateTree(stage, hasFlowers, hasFruit) {
+  const SKY = `
+    <defs>
+      <radialGradient id="sg" cx="50%" cy="20%" r="80%">
+        <stop offset="0%" stop-color="#EAF4FF"/>
+        <stop offset="100%" stop-color="#F7F8FC"/>
+      </radialGradient>
+    </defs>
+    <rect width="300" height="300" fill="url(#sg)"/>
+    <ellipse cx="150" cy="275" rx="82" ry="15" fill="#B4D9A0" opacity=".45"/>
+    <ellipse cx="150" cy="270" rx="72" ry="10" fill="#C4B474" opacity=".65"/>
+    <ellipse cx="150" cy="267" rx="66" ry="7" fill="#D2BC82"/>
+    <path d="M104 267 Q106 261 108 267" stroke="#6CC35A" stroke-width="1.5" fill="none"/>
+    <path d="M192 267 Q194 261 196 267" stroke="#6CC35A" stroke-width="1.5" fill="none"/>
+  `;
+  let tree = '';
+  if (stage === 0) {
+    tree = `
+      <path d="M150 266 Q149 253 150 237 Q151 225 149 214" stroke="#5B9E3A" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M150 241 Q136 230 126 235 Q135 247 150 247" fill="#7FCC5E"/>
+      <path d="M150 253 Q164 239 174 243 Q166 256 150 257" fill="#6BBF4E"/>
+      <path d="M149 214 Q144 208 148 203" stroke="#5B9E3A" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle cx="148" cy="202" r="4.5" fill="#7FCC5E"/>
+    `;
+  } else if (stage === 1) {
+    tree = `
+      <path d="M148 266 Q141 272 133 270" stroke="#8B5E3C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M152 266 Q159 272 167 270" stroke="#8B5E3C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M147 266 Q145 245 147 211" stroke="#9B6B42" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M153 266 Q155 245 153 211" stroke="#B87E52" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <circle cx="150" cy="191" r="37" fill="#4BA836"/>
+      <circle cx="129" cy="203" r="23" fill="#54B83F"/>
+      <circle cx="171" cy="203" r="23" fill="#54B83F"/>
+      <circle cx="150" cy="180" r="27" fill="#62CC4C"/>
+      <circle cx="150" cy="187" r="17" fill="#74D95E"/>
+    `;
+  } else if (stage === 2) {
+    tree = `
+      <path d="M147 266 Q139 274 129 272" stroke="#8B5E3C" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M153 266 Q161 274 171 272" stroke="#8B5E3C" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M145 266 Q136 276 124 276" stroke="#7A5230" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M145 266 Q143 239 145 196" stroke="#9B6B42" stroke-width="14" fill="none" stroke-linecap="round"/>
+      <path d="M155 266 Q157 239 155 196" stroke="#B87E52" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M146 223 Q130 213 118 218" stroke="#8B5E3C" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <path d="M154 228 Q170 214 182 219" stroke="#8B5E3C" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <circle cx="150" cy="166" r="49" fill="#40982C"/>
+      <circle cx="120" cy="182" r="31" fill="#4DAA38"/>
+      <circle cx="180" cy="182" r="31" fill="#4DAA38"/>
+      <circle cx="137" cy="155" r="30" fill="#5CBD46"/>
+      <circle cx="163" cy="155" r="30" fill="#5CBD46"/>
+      <circle cx="150" cy="146" r="26" fill="#6ECF58"/>
+    `;
+  } else {
+    /* Stage 3 — tall, full tree reaching near top of viewport */
+    tree = `
+      <path d="M146 267 Q133 278 114 276" stroke="#7A5230" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+      <path d="M154 267 Q167 278 186 276" stroke="#7A5230" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+      <path d="M143 267 Q128 282 108 284" stroke="#6B4520" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M157 267 Q172 282 192 284" stroke="#6B4520" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M143 267 Q140 234 142 156" stroke="#9B6B42" stroke-width="19" fill="none" stroke-linecap="round"/>
+      <path d="M157 267 Q160 234 158 156" stroke="#B87E52" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M149 254 Q151 224 149 204" stroke="#C4A27A" stroke-width="1.5" opacity=".35" fill="none"/>
+      <path d="M144 222 Q122 208 100 212" stroke="#9B6B42" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M156 222 Q178 208 200 212" stroke="#9B6B42" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M145 196 Q126 180 110 182" stroke="#8B5E3C" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M155 196 Q174 180 190 182" stroke="#8B5E3C" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M146 172 Q132 158 120 160" stroke="#7A5230" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M154 172 Q168 158 180 160" stroke="#7A5230" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <circle cx="150" cy="210" r="44" fill="#2E8020"/>
+      <circle cx="108" cy="220" r="34" fill="#338A24"/>
+      <circle cx="192" cy="220" r="34" fill="#338A24"/>
+      <circle cx="128" cy="185" r="38" fill="#3C9830"/>
+      <circle cx="172" cy="185" r="38" fill="#3C9830"/>
+      <circle cx="150" cy="178" r="42" fill="#44A638"/>
+      <circle cx="116" cy="152" r="34" fill="#4EB440"/>
+      <circle cx="184" cy="152" r="34" fill="#4EB440"/>
+      <circle cx="150" cy="145" r="40" fill="#58C248"/>
+      <circle cx="130" cy="116" r="32" fill="#64D054"/>
+      <circle cx="170" cy="116" r="32" fill="#64D054"/>
+      <circle cx="150" cy="108" r="36" fill="#70DC60"/>
+      <circle cx="140" cy="80" r="28" fill="#7CEA6C"/>
+      <circle cx="160" cy="80" r="28" fill="#7CEA6C"/>
+      <circle cx="150" cy="62" r="26" fill="#88F278"/>
+      <circle cx="150" cy="44" r="18" fill="#96FA86"/>
+    `;
+  }
+
+  const flowerPos = {
+    1: [{x:130,y:178},{x:168,y:181},{x:150,y:167},{x:132,y:198},{x:168,y:196}],
+    2: [{x:115,y:174},{x:185,y:176},{x:137,y:143},{x:163,y:144},{x:150,y:134},{x:123,y:164},{x:177,y:165}],
+    3: [{x:98,y:214},{x:202,y:216},{x:113,y:179},{x:187,y:181},{x:150,y:174},
+        {x:118,y:147},{x:182,y:149},{x:132,y:111},{x:168,y:113},
+        {x:150,y:82},{x:142,y:76},{x:158,y:78}]
+  };
+  const fruitPos = {
+    1: [{x:126,y:203},{x:150,y:175},{x:174,y:205}],
+    2: [{x:111,y:186},{x:150,y:137},{x:189,y:187},{x:133,y:154},{x:167,y:156}],
+    3: [{x:96,y:221},{x:204,y:223},{x:108,y:188},{x:192,y:190},
+        {x:118,y:157},{x:182,y:159},{x:149,y:147},{x:149,y:109},
+        {x:141,y:75},{x:159,y:77}]
+  };
+
+  let flowers = '';
+  if (hasFlowers && stage >= 1 && flowerPos[stage]) {
+    flowerPos[stage].forEach(p => {
+      flowers += `<g transform="translate(${p.x},${p.y})">
+        <circle cx="-5.5" cy="0" r="5" fill="#FFB3CF" opacity=".92"/>
+        <circle cx="5.5" cy="0" r="5" fill="#FFCFDE" opacity=".92"/>
+        <circle cx="0" cy="-5.5" r="5" fill="#FFB3CF" opacity=".92"/>
+        <circle cx="0" cy="5.5" r="5" fill="#FFCFDE" opacity=".92"/>
+        <circle r="5" fill="#FFB3CF" opacity=".92"/>
+        <circle r="3.2" fill="#FFE566"/>
+      </g>`;
+    });
+  }
+  let fruit = '';
+  if (hasFruit && stage >= 1 && fruitPos[stage]) {
+    fruitPos[stage].forEach(p => {
+      fruit += `<g transform="translate(${p.x},${p.y})">
+        <path d="M0 -9 Q2.5 -15 1 -18" stroke="#4A7C2F" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <circle r="8.5" fill="#E0263A"/>
+        <circle cx="2.5" cy="-3" r="2.8" fill="rgba(255,255,255,.22)" transform="rotate(-25 2.5 -3)"/>
+      </g>`;
+    });
+  }
+  return SKY + tree + flowers + fruit;
+}
+
+function trCelebrate() {
+  const overlay = document.getElementById('celebOverlay');
+  const treeSvg = document.getElementById('treeSvg');
+  treeSvg.classList.remove('celebrating');
+  void treeSvg.offsetWidth;
+  treeSvg.classList.add('celebrating');
+  setTimeout(() => treeSvg.classList.remove('celebrating'), 850);
+  overlay.innerHTML = '';
+  overlay.style.display = 'block';
+  const emojis = ['⭐','✨','🌟','💫','🎉','🌸','💐','🏆'];
+  for (let i = 0; i < 16; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.textContent = emojis[i % emojis.length];
+    s.style.left   = (10 + Math.random() * 80) + '%';
+    s.style.top    = (20 + Math.random() * 65) + '%';
+    s.style.fontSize = (13 + Math.random() * 13) + 'px';
+    s.style.animationDelay = (Math.random() * .7) + 's';
+    overlay.appendChild(s);
+  }
+  setTimeout(() => { overlay.style.display = 'none'; overlay.innerHTML = ''; }, 2600);
+}
+
+function trRenderAll() {
+  trRenderRoster();
+  trRenderCenter();
+  trRenderEntryForm();
+  if (trTrendOpen) trRenderTrend();
+}
+
+function trRenderRoster() {
+  const list = document.getElementById('rosterList');
+  document.getElementById('btnAddStudent').disabled = trApp.students.length >= 10;
+  if (!trApp.students.length) {
+    list.innerHTML = '<div class="roster-empty">No students yet.<br/>Click + to add one.</div>';
+    return;
+  }
+  list.innerHTML = trApp.students.map(s => {
+    const st = trStats(s);
+    const active = s.id === trApp.selectedId;
+    return `<div class="student-item ${active ? 'active' : ''}" onclick="trSelect('${s.id}')">
+      <div class="student-item-name">${escHtml(s.name)} ${st.currentStreak > 0 ? '🔥' + st.currentStreak : ''}</div>
+      <div class="student-item-sub">Gr. ${s.grade||'—'} · ${st.daysLogged} days · ${st.daysLogged ? st.avgPct+'%' : 'no data'}</div>
+    </div>`;
+  }).join('');
+}
+
+function trRenderCenter() {
+  const student = trSelected();
+  if (!student) {
+    document.getElementById('statsBar').innerHTML = '<div class="stats-empty">Select a student to view progress</div>';
+    document.getElementById('treeSvg').innerHTML  = trGenerateTree(0, false, false);
+    document.getElementById('stageLabel').textContent = '🌱 Add a student to get started';
+    document.getElementById('progressFill').style.width = '0%';
+    document.getElementById('progressText').textContent = '';
+    return;
+  }
+  const st    = trStats(student);
+  const stage = trStage(st.goalMetDays);
+  document.getElementById('statsBar').innerHTML = [
+    { icon:'🔥', val: st.currentStreak + (st.currentStreak >= 3 ? ' 🌸' : ''), label:'Streak' },
+    { icon:'📅', val: st.daysLogged,  label:'Days Logged' },
+    { icon:'📊', val: st.daysLogged ? st.avgPct + '%' : '—', label:'Avg Score' },
+    { icon:'🎯', val: student.goalPct + '%', label:'Daily Goal' },
+    { icon:'🏆', val: st.longestStreak, label:'Best Streak' },
+  ].map(c => `<div class="stat-card">
+    <div class="stat-icon">${c.icon}</div>
+    <div class="stat-val">${c.val}</div>
+    <div class="stat-label">${c.label}</div>
+  </div>`).join('');
+  document.getElementById('treeSvg').innerHTML = trGenerateTree(stage, st.currentStreak >= 3, st.currentStreak >= 5);
+  const stageNames = ['🌱 Seedling','🌿 Sapling','🌳 Young Tree','🌲 Full Tree'];
+  const nextT = [5, 10, 20, Infinity];
+  const thresholds = [0, 5, 10, 20];
+  const pct = stage === 3 ? 100 : Math.min(100, Math.round(((st.goalMetDays - thresholds[stage]) / (nextT[stage] - thresholds[stage])) * 100));
+  document.getElementById('stageLabel').textContent  = `${stageNames[stage]}  —  ${escHtml(student.name)}`;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = stage === 3 ? '🌲 Maximum growth reached!' : `${st.goalMetDays} / ${nextT[stage]} goal days to next stage`;
+}
+
+function trRenderEntryForm() {
+  const student = trSelected();
+  const form    = document.getElementById('entryForm');
+  const noMsg   = document.getElementById('noStudentMsg');
+  if (!student) { form.style.display = 'none'; noMsg.style.display = 'block'; return; }
+  form.style.display = 'flex';
+  noMsg.style.display = 'none';
+  const pInp = document.getElementById('fPossible');
+  if (!pInp.dataset.touched) pInp.value = student.pointsPerDay;
+  updateScorePreview();
+}
+
+function updateScorePreview() {
+  const student = trSelected();
+  if (!student) return;
+  const earned   = parseInt(document.getElementById('fEarned').value);
+  const possible = parseInt(document.getElementById('fPossible').value);
+  if (isNaN(earned) || isNaN(possible) || possible <= 0) {
+    document.getElementById('fPctDisplay').textContent = '—';
+    document.getElementById('fGoalDisplay').innerHTML  = '';
+    return;
+  }
+  const pct     = Math.round((earned / possible) * 100);
+  const goalMet = pct >= student.goalPct;
+  document.getElementById('fPctDisplay').textContent = pct + '%';
+  document.getElementById('fGoalDisplay').innerHTML  = goalMet
+    ? '<span class="badge met">✅ Goal Met</span>'
+    : '<span class="badge miss">❌ Not Yet</span>';
+}
+
+document.getElementById('fPossible').addEventListener('input', function() {
+  this.dataset.touched = '1';
+  updateScorePreview();
+});
+
+function trSelect(id) {
+  trApp.selectedId = id;
+  trSave();
+  const pInp = document.getElementById('fPossible');
+  if (pInp) delete pInp.dataset.touched;
+  trRenderAll();
+  if (trTrendOpen) trRenderTrend();
+}
+
+function handleSaveEntry() {
+  const student = trSelected();
+  if (!student) return;
+  const date     = document.getElementById('fDate').value;
+  const earned   = parseInt(document.getElementById('fEarned').value);
+  const possible = parseInt(document.getElementById('fPossible').value);
+  const notes    = document.getElementById('fNotes').value.trim();
+  if (!date)                                      { alert('Please select a date.'); return; }
+  if (isNaN(earned) || earned < 0)                { alert('Please enter valid points earned.'); return; }
+  if (isNaN(possible) || possible < 1)            { alert('Please enter valid points possible.'); return; }
+  if (earned > possible)                          { alert('Points earned cannot exceed points possible.'); return; }
+  const existing = student.logs.findIndex(l => l.date === date);
+  if (existing !== -1) {
+    if (!confirm(`An entry for ${trFmt(date)} already exists. Replace it?`)) return;
+    student.logs.splice(existing, 1);
+  }
+  const pct     = Math.round((earned / possible) * 100);
+  const goalMet = pct >= student.goalPct;
+  student.logs.push({ date, earned, possible, pct, goalMet, notes });
+  trSave();
+  trRenderAll();
+  if (trTrendOpen) trRenderTrend();
+  if (goalMet) trCelebrate();
+  document.getElementById('fEarned').value = '';
+  document.getElementById('fNotes').value  = '';
+  updateScorePreview();
+}
+
+let trChart    = null;
+let trTrendOpen = false;
+
+function toggleTrend() {
+  trTrendOpen = !trTrendOpen;
+  document.getElementById('trendContent').style.display = trTrendOpen ? 'block' : 'none';
+  document.getElementById('trendChevron').textContent   = trTrendOpen ? '▲' : '▼';
+  if (trTrendOpen) trRenderTrend();
+}
+
+function trRenderTrend() {
+  const student = trSelected();
+  trRenderLogTable(student);
+  if (!student || !student.logs.length) {
+    document.getElementById('noChartMsg').style.display = 'block';
+    document.getElementById('chartWrap').style.display  = 'none';
+    return;
+  }
+  document.getElementById('noChartMsg').style.display = 'none';
+  document.getElementById('chartWrap').style.display  = 'block';
+  const sorted   = [...student.logs].sort((a,b) => a.date < b.date ? -1 : 1);
+  const labels   = sorted.map(l => trShort(l.date));
+  const data     = sorted.map(l => l.pct);
+  const ptColors = sorted.map(l => l.goalMet ? '#06D6A0' : '#FF6B6B');
+  if (trChart) { trChart.destroy(); trChart = null; }
+  const ctx = document.getElementById('trendCanvas').getContext('2d');
+  trChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Score %', data, borderColor: '#3A86FF', backgroundColor: 'rgba(58,134,255,.09)', tension: .35,
+          pointBackgroundColor: ptColors, pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, fill: true },
+        { label: `Goal (${student.goalPct}%)`, data: Array(sorted.length).fill(student.goalPct),
+          borderColor: '#FFBE0B', borderDash: [5,4], borderWidth: 2, pointRadius: 0, tension: 0, fill: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { family:'Nunito', size:10 }, boxWidth:12, padding:8 } },
+        tooltip: { callbacks: {
+          label: c => `${c.dataset.label}: ${c.raw}%`,
+          afterLabel: c => sorted[c.dataIndex]?.notes ? `📝 ${sorted[c.dataIndex].notes}` : ''
+        }}
+      },
+      scales: {
+        y: { min:0, max:100, ticks: { callback: v => v+'%', font: { family:'Nunito', size:9 } }, grid: { color:'rgba(0,0,0,.04)' } },
+        x: { ticks: { font: { family:'Nunito', size:9 } }, grid: { color:'rgba(0,0,0,.03)' } }
+      }
+    }
+  });
+}
+
+function trRenderLogTable(student) {
+  const wrap = document.getElementById('logTableWrap');
+  if (!student || !student.logs.length) { wrap.innerHTML = '<p class="no-logs">No entries logged yet.</p>'; return; }
+  const sorted = [...student.logs].sort((a,b) => a.date < b.date ? 1 : -1);
+  wrap.innerHTML = `<table class="log-tbl">
+    <thead><tr><th>Date</th><th>Pts</th><th>%</th><th>✓</th><th>Notes</th></tr></thead>
+    <tbody>
+      ${sorted.map(l => `<tr>
+        <td>${trShort(l.date)}</td>
+        <td>${l.earned}/${l.possible}</td>
+        <td class="${l.goalMet?'met-text':'miss-text'}">${l.pct}%</td>
+        <td>${l.goalMet?'✅':'❌'}</td>
+        <td class="notes-cell">${escHtml(l.notes||'—')}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function openStudentModal() {
+  document.getElementById('addStudentModal').style.display = 'flex';
+  document.getElementById('mName').value    = '';
+  document.getElementById('mGrade').value   = '';
+  document.getElementById('mGoalPct').value = '80';
+  document.getElementById('mPoints').value  = '84';
+  setTimeout(() => document.getElementById('mName').focus(), 60);
+}
+function closeStudentModal() { document.getElementById('addStudentModal').style.display = 'none'; }
+function modalOverlayClick(e) { if (e.target === document.getElementById('addStudentModal')) closeStudentModal(); }
+
+function handleAddStudent() {
+  const name  = document.getElementById('mName').value.trim();
+  const grade = document.getElementById('mGrade').value;
+  const gPct  = parseInt(document.getElementById('mGoalPct').value);
+  const pts   = parseInt(document.getElementById('mPoints').value);
+  if (!name)                             { alert('Please enter a student name.'); return; }
+  if (isNaN(gPct) || gPct < 1 || gPct > 100) { alert('Goal % must be 1–100.'); return; }
+  if (isNaN(pts) || pts < 1)             { alert('Points/day must be at least 1.'); return; }
+  const student = { id: trUID(), name, grade, goalPct: gPct, pointsPerDay: pts, logs: [] };
+  trApp.students.push(student);
+  trApp.selectedId = student.id;
+  trSave();
+  closeStudentModal();
+  const pInp = document.getElementById('fPossible');
+  if (pInp) delete pInp.dataset.touched;
+  trRenderAll();
+}
+
+function initTracker() {
+  trLoad();
+  document.getElementById('fDate').value = trToday();
+  trRenderAll();
+}
+
+// ════════════════════════════════════════════════
 // BOOT
-// ═══════════════════════════════════════════════════
-init();
+// ════════════════════════════════════════════════
+initCard();
+initTracker();
 </script>
 </body>
 </html>
