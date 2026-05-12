@@ -1788,13 +1788,14 @@ function trBuildChartConfig(student, sorted, fontSize) {
       labels,
       datasets: [
         { label: 'Score %', data, borderColor: '#3A86FF', backgroundColor: 'rgba(58,134,255,.09)', tension: .35,
-          pointBackgroundColor: ptColors, pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, fill: true },
+          pointBackgroundColor: ptColors, pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, fill: true, clip: false },
         { label: `Goal (${student.goalPct}%)`, data: Array(sorted.length).fill(student.goalPct),
-          borderColor: '#FFBE0B', borderDash: [5,4], borderWidth: 2, pointRadius: 0, tension: 0, fill: false }
+          borderColor: '#FFBE0B', borderDash: [5,4], borderWidth: 2, pointRadius: 0, tension: 0, fill: false, clip: false }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 8, right: 6 } },
       plugins: {
         legend: { position: 'bottom', labels: { font: { family:'Nunito', size: fontSize }, boxWidth:14, padding:10 } },
         tooltip: { callbacks: {
