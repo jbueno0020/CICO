@@ -1791,6 +1791,7 @@ const AQ_BUBBLE_COL = [62, 152, 252, 358, 444];
 const trAq = {
   canvas:null, ctx:null, raf:null,
   fish:[], bubbles:[], jellies:[], sparkles:[],
+  airstoneBubbles:[], motes:[],
   crab:{x:80, dir:1}, turtle:{x:-90, dir:1},
   goalMetDays:0, streak:0, prevGoalMetDays:-1,
 };
@@ -1810,12 +1811,25 @@ function trAqInit() {
   c.width = AQ_W; c.height = AQ_H;
   trAq.bubbles = AQ_BUBBLE_COL.flatMap(() =>
     Array.from({length:4}, () => _aqNewBubble(true)));
+  trAq.airstoneBubbles = Array.from({length:18}, () => _aqNewAirstoneBubble(true));
+  trAq.motes = Array.from({length:22}, () => _aqNewMote());
 }
 
 function _aqNewBubble(randomY) {
   const col = AQ_BUBBLE_COL[Math.floor(Math.random() * AQ_BUBBLE_COL.length)];
   return { x: col + (Math.random()-.5)*10, y: randomY ? Math.random()*AQ_FLOOR : AQ_FLOOR,
            r: 2+Math.random()*2.5, speed: .35+Math.random()*.5, alpha: .3+Math.random()*.35 };
+}
+
+function _aqNewAirstoneBubble(randomY) {
+  return { x: AQ_W-30+(Math.random()-.5)*8, y: randomY ? Math.random()*AQ_FLOOR : AQ_FLOOR-4,
+           r: .8+Math.random()*1.2, speed: .55+Math.random()*.65, alpha: .2+Math.random()*.28 };
+}
+
+function _aqNewMote() {
+  return { x: Math.random()*AQ_W, y: Math.random()*AQ_FLOOR,
+           vx:(Math.random()-.5)*.18, vy:(Math.random()-.5)*.09,
+           r:.5+Math.random()*.7, alpha:.1+Math.random()*.18 };
 }
 
 function trAqUpdate(gmd, streak) {
@@ -1885,6 +1899,9 @@ function _aqDraw(t, dt) {
   else          { bg.addColorStop(0,'#072B4A'); bg.addColorStop(1,'#0E4D78'); }
   ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
 
+  // ── Water surface shimmer ───────────────────────
+  _aqWaterSurface(ctx, W, t);
+
   // ── Light rays ──────────────────────────────────
   if (m.hasLightRays) {
     ctx.save();
@@ -1919,11 +1936,17 @@ function _aqDraw(t, dt) {
     ctx.fillStyle = '#051E35'; ctx.fillRect(0,FL,W,H-FL);
   }
 
+  // ── Caustic light on floor ──────────────────────
+  if (m.hasSand) _aqCaustics(ctx, W, FL, t);
+
   // ── Coral ───────────────────────────────────────
   if (m.hasCoral) AQ_CORAL_POS.forEach(c => _aqCoral(ctx,c.x,FL,c.h,c.c));
 
   // ── Decoration (castle) ─────────────────────────
   if (m.hasDecor) _aqCastle(ctx, 224, FL);
+
+  // ── Airstone tube + micro-bubbles (always once sand exists) ──
+  if (m.hasSand) _aqAirstone(ctx, W, FL, t);
 
   // ── Crab ────────────────────────────────────────
   if (m.hasCrab) {
@@ -1959,8 +1982,8 @@ function _aqDraw(t, dt) {
     _aqTurtle(ctx, trAq.turtle.x, ty, trAq.turtle.dir, t);
   }
 
-  // ── Rare streak creature (manta ray, streak ≥ 10) ──
-  if (str >= 10) _aqManta(ctx, W, H, t);
+  // ── Rare streak creature: shark (streak ≥ 10) ──
+  if (str >= 10) _aqShark(ctx, W, H, t);
 
   // ── Bubbles (streak ≥ 3) ────────────────────────
   if (str >= 3) {
@@ -1974,6 +1997,14 @@ function _aqDraw(t, dt) {
     });
   }
 
+  // ── Ambient motes ───────────────────────────────
+  trAq.motes.forEach(mo => {
+    mo.x+=mo.vx; mo.y+=mo.vy;
+    if (mo.x<0||mo.x>W||mo.y<0||mo.y>FL) { Object.assign(mo, _aqNewMote()); return; }
+    ctx.beginPath(); ctx.arc(mo.x,mo.y,mo.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(190,225,255,${mo.alpha})`; ctx.fill();
+  });
+
   // ── Sparkles ────────────────────────────────────
   for (let i=sparkles.length-1; i>=0; i--) {
     const s=sparkles[i];
@@ -1986,14 +2017,30 @@ function _aqDraw(t, dt) {
   // ── Locked previews ─────────────────────────────
   _aqLockedPreviews(ctx, W, g, str);
 
-  // ── Tank glass border ───────────────────────────
+  // ── Classic aquarium frame ───────────────────────
   ctx.save();
-  ctx.strokeStyle = str>=5 ? '#4DD6E0' : '#4A9AC4';
-  ctx.lineWidth = 5;
-  _aqRRect(ctx,2,2,W-4,H-4,9); ctx.stroke();
-  const sheen = ctx.createLinearGradient(0,0,70,70);
-  sheen.addColorStop(0,'rgba(255,255,255,.14)'); sheen.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.fillStyle = sheen; _aqRRect(ctx,2,2,W-4,H-4,9); ctx.fill();
+  // Black outer frame
+  ctx.fillStyle = '#1A2530';
+  ctx.fillRect(0,0,W,9);       // top bar
+  ctx.fillRect(0,H-7,W,7);     // bottom bar
+  ctx.fillRect(0,0,7,H);       // left bar
+  ctx.fillRect(W-7,0,7,H);     // right bar
+  // Accent edge highlight (top)
+  const frameHL = ctx.createLinearGradient(0,0,0,9);
+  frameHL.addColorStop(0,'rgba(255,255,255,.18)');
+  frameHL.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle = frameHL; ctx.fillRect(0,0,W,9);
+  // Inner glass sheen
+  const sheen = ctx.createLinearGradient(0,9,60,60);
+  sheen.addColorStop(0,'rgba(255,255,255,.10)'); sheen.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle = sheen; ctx.fillRect(7,9,W-14,H-16);
+  // Corner screws
+  [[9,11],[W-9,11],[9,H-9],[W-9,H-9]].forEach(([sx,sy])=>{
+    ctx.beginPath(); ctx.arc(sx,sy,2.5,0,Math.PI*2);
+    ctx.fillStyle='#384A5C'; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(sx-1.5,sy); ctx.lineTo(sx+1.5,sy);
+    ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=.8; ctx.stroke();
+  });
   ctx.restore();
 }
 
@@ -2127,21 +2174,91 @@ function _aqTurtle(ctx, x, y, dir, t) {
   ctx.restore();
 }
 
-function _aqManta(ctx, W, H, t) {
-  const x = ((t*18)%(W+180))-90;
-  const y = H*.22 + 20*Math.sin(t*.28);
+function _aqShark(ctx, W, H, t) {
+  const x = ((t*16) % (W+200)) - 100;
+  const y = H*.24 + 14*Math.sin(t*.22);
   ctx.save(); ctx.translate(x, y);
-  const flap=Math.sin(t*1.8)*.18;
-  ctx.beginPath(); ctx.moveTo(0,0);
-  ctx.bezierCurveTo(-30,-28-flap*60,-70,4,  -78,8);
-  ctx.bezierCurveTo(-58,14,  -8,6+flap*20,  0,18);
-  ctx.bezierCurveTo( 8,6+flap*20, 58,14,    78,8);
-  ctx.bezierCurveTo( 70,4,  30,-28-flap*60, 0,0);
-  ctx.fillStyle='rgba(40,55,100,.78)'; ctx.fill();
-  ctx.beginPath(); ctx.ellipse(0,10,6,4,0,0,Math.PI*2); ctx.fillStyle='rgba(60,80,130,.8)'; ctx.fill();
-  ctx.beginPath(); ctx.moveTo(0,18); ctx.lineTo(18,52+Math.sin(t*2)*4); ctx.strokeStyle='rgba(40,55,100,.6)'; ctx.lineWidth=2.5; ctx.stroke();
-  ctx.beginPath(); ctx.arc(-12,2,2,0,Math.PI*2); ctx.fillStyle='rgba(200,220,255,.7)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(12,2,2,0,Math.PI*2); ctx.fill();
+  const L=52, BH=17;
+  // pectoral fins
+  ctx.beginPath(); ctx.moveTo(-L*.05,BH*.3); ctx.lineTo(-L*.45,BH*2.4); ctx.lineTo(L*.25,BH*.9);
+  ctx.fillStyle='#3E5C70'; ctx.fill();
+  // body with gradient
+  const bg2=ctx.createLinearGradient(0,-BH,0,BH);
+  bg2.addColorStop(0,'#4E6E84'); bg2.addColorStop(.55,'#607E92'); bg2.addColorStop(1,'#DDE8EC');
+  ctx.beginPath(); ctx.ellipse(0,0,L,BH,0,0,Math.PI*2); ctx.fillStyle=bg2; ctx.fill();
+  // white belly patch
+  ctx.beginPath(); ctx.ellipse(4,BH*.38,L*.65,BH*.48,0,0,Math.PI*2);
+  ctx.fillStyle='rgba(230,242,245,.62)'; ctx.fill();
+  // tail (crescent)
+  ctx.beginPath(); ctx.moveTo(-L,0); ctx.lineTo(-L-20,-BH*1.6); ctx.lineTo(-L-10,0); ctx.lineTo(-L-20,BH*1.6); ctx.closePath();
+  ctx.fillStyle='#3A5668'; ctx.fill();
+  // dorsal fin
+  ctx.beginPath(); ctx.moveTo(-L*.08,-BH); ctx.lineTo(L*.12,-BH*3.2); ctx.lineTo(L*.52,-BH*1.3); ctx.lineTo(L*.42,-BH); ctx.closePath();
+  ctx.fillStyle='#3A5668'; ctx.fill();
+  // small caudal keel
+  ctx.beginPath(); ctx.moveTo(-L*.7,-BH*.25); ctx.lineTo(-L*.85,-BH*.8); ctx.lineTo(-L*.6,-BH*.25); ctx.fillStyle='#3A5668'; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-L*.7,BH*.25); ctx.lineTo(-L*.85,BH*.8); ctx.lineTo(-L*.6,BH*.25); ctx.fill();
+  // gill slits
+  ctx.lineWidth=1.4; ctx.strokeStyle='rgba(25,45,58,.55)';
+  for(let i=0;i<4;i++){const gx=-L*.12+i*7; ctx.beginPath(); ctx.moveTo(gx,-BH*.45); ctx.lineTo(gx+1.5,BH*.3); ctx.stroke();}
+  // eye
+  ctx.beginPath(); ctx.arc(L*.56,-BH*.28,3.5,0,Math.PI*2); ctx.fillStyle='#0A1820'; ctx.fill();
+  ctx.beginPath(); ctx.arc(L*.55,-BH*.35,1.2,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,.35)'; ctx.fill();
+  // mouth + teeth
+  ctx.beginPath(); ctx.moveTo(L*.75,BH*.08); ctx.quadraticCurveTo(L*.96,BH*.55,L*.76,BH*.72);
+  ctx.strokeStyle='rgba(20,40,52,.55)'; ctx.lineWidth=1.5; ctx.stroke();
+  for(let i=0;i<4;i++){const tx=L*.78+i*4.5;
+    ctx.beginPath(); ctx.moveTo(tx,BH*.18); ctx.lineTo(tx+1.8,BH*.03); ctx.lineTo(tx+3.5,BH*.18);
+    ctx.fillStyle='rgba(238,242,244,.85)'; ctx.fill();}
+  ctx.restore();
+}
+
+function _aqWaterSurface(ctx, W, t) {
+  ctx.save();
+  // top shimmer layer
+  const sg=ctx.createLinearGradient(0,0,0,16);
+  sg.addColorStop(0,'rgba(140,215,240,.32)'); sg.addColorStop(1,'rgba(140,215,240,0)');
+  ctx.fillStyle=sg; ctx.fillRect(0,0,W,16);
+  // animated wave lines
+  ctx.lineWidth=1.2;
+  for(let w=0;w<3;w++){
+    ctx.beginPath(); ctx.strokeStyle=`rgba(255,255,255,${.07+w*.04})`;
+    for(let x=0;x<=W;x+=3){
+      const y=5+3.5*Math.sin(x*.025+t*.65+w*1.2);
+      x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function _aqCaustics(ctx, W, FL, t) {
+  ctx.save(); ctx.globalAlpha=.11;
+  for(let i=0;i<9;i++){
+    const cx=((i*73+t*6)%W), cy=FL+5+(i%3)*6;
+    const rx=10+8*Math.sin(t*.42+i), ry=3+2.5*Math.sin(t*.6+i*1.4);
+    ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,t*.18+i*.6,0,Math.PI*2);
+    ctx.fillStyle='#FFFCCC'; ctx.fill();
+  }
+  ctx.globalAlpha=1; ctx.restore();
+}
+
+function _aqAirstone(ctx, W, FL, t) {
+  // tube from top-right to floor
+  ctx.save();
+  ctx.strokeStyle='rgba(160,175,190,.5)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(W-30,9); ctx.lineTo(W-30,FL-3); ctx.stroke();
+  // airstone pebble
+  ctx.beginPath(); ctx.ellipse(W-30,FL-2,7,3.5,0,0,Math.PI*2);
+  ctx.fillStyle='rgba(120,135,148,.65)'; ctx.fill();
+  ctx.strokeStyle='rgba(80,95,108,.4)'; ctx.lineWidth=1; ctx.stroke();
+  // micro-bubbles
+  trAq.airstoneBubbles.forEach(b=>{
+    b.y-=b.speed; b.x+=Math.sin(t*2.8+b.y*.12)*.18;
+    if(b.y<-6) Object.assign(b,_aqNewAirstoneBubble(false));
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(170,215,250,${b.alpha})`; ctx.lineWidth=.7; ctx.stroke();
+  });
   ctx.restore();
 }
 
@@ -2151,7 +2268,7 @@ function _aqLockedPreviews(ctx, W, gmd, streak) {
     {days:7,label:'2nd Fish',icon:'🐠'},{days:10,label:'Seaweed',icon:'🌿'},
     {days:12,label:'3rd Fish',icon:'🐡'},{days:15,label:'Crab',icon:'🦀'},
     {days:20,label:'Jellyfish',icon:'🪼'},{days:25,label:'Sea Turtle',icon:'🐢'},
-    {days:30,label:'???',icon: streak>=10?'🦈':'❓'},
+    {days:30,label:'Shark',icon:'🦈'},
   ].filter(m=>m.days>gmd).slice(0,3);
   if (!upcoming.length) return;
   const pw=82, ph=26, gap=6;
