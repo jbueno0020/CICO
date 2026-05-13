@@ -640,14 +640,15 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
 .stat-label { font-size: 9.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; margin-top: 2px; }
 .stats-empty { font-size: 12px; color: var(--muted); font-style: italic; margin: auto; }
 
-.tree-area {
-  flex: 1;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  position: relative; padding: 10px 0 6px; min-height: 0;
+.aquarium-area {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: stretch; position: relative; padding: 10px 12px 6px; min-height: 0;
 }
-.tree-svg { width: 250px; height: 250px; display: block; flex-shrink: 0; }
-.tree-svg.celebrating { animation: treeBounce .75s ease-in-out; }
+.aquarium-canvas {
+  flex: 1; min-height: 0; display: block;
+  width: 100%; border-radius: 10px;
+  cursor: default;
+}
 .stage-info { text-align: center; margin-top: 6px; flex-shrink: 0; }
 .stage-label { font-size: 13px; font-weight: 800; color: var(--text); }
 .progress-track {
@@ -666,13 +667,6 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
 .celeb-overlay { position: absolute; inset: 0; pointer-events: none; display: none; z-index: 30; }
 .sparkle { position: absolute; animation: sparkleUp 1.8s ease-out forwards; user-select: none; }
 
-@keyframes treeBounce {
-  0%,100% { transform: scale(1) rotate(0deg); }
-  20%     { transform: scale(1.1) rotate(-3deg); }
-  40%     { transform: scale(1.06) rotate(3deg); }
-  65%     { transform: scale(1.03) rotate(-1deg); }
-  82%     { transform: scale(1.01) rotate(.5deg); }
-}
 @keyframes sparkleUp {
   0%   { opacity: 0; transform: translateY(0) scale(.4); }
   18%  { opacity: 1; transform: translateY(-12px) scale(1.1); }
@@ -973,11 +967,11 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
       <div class="stats-bar" id="statsBar">
         <div class="stats-empty">Select a student to view their progress</div>
       </div>
-      <div class="tree-area" id="treeArea">
+      <div class="aquarium-area" id="aquariumArea">
         <div class="celeb-overlay" id="celebOverlay"></div>
-        <svg id="treeSvg" viewBox="0 0 300 300" class="tree-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+        <canvas id="aquariumCanvas" class="aquarium-canvas"></canvas>
         <div class="stage-info">
-          <div class="stage-label" id="stageLabel">🌱 Add a student to get started</div>
+          <div class="stage-label" id="stageLabel">🐠 Add a student to get started</div>
           <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
           <div class="progress-text" id="progressText"></div>
         </div>
@@ -1113,7 +1107,8 @@ function switchTab(tab) {
   document.getElementById('headerLogo').textContent  = meta.logo;
   document.getElementById('headerTitle').textContent = meta.title;
   document.getElementById('headerSub').textContent   = meta.sub;
-  if (tab === 'tracker') trRenderAll();
+  if (tab === 'tracker') { trRenderAll(); trAqStart(); }
+  else { trAqStop(); }
 }
 
 // ════════════════════════════════════════════════
@@ -1469,157 +1464,31 @@ function trStats(student) {
   };
 }
 
-function trStage(days) { return days >= 20 ? 3 : days >= 10 ? 2 : days >= 5 ? 1 : 0; }
-
-function trGenerateTree(stage, hasFlowers, hasFruit) {
-  const SKY = `
-    <defs>
-      <radialGradient id="sg" cx="50%" cy="20%" r="80%">
-        <stop offset="0%" stop-color="#EAF4FF"/>
-        <stop offset="100%" stop-color="#F7F8FC"/>
-      </radialGradient>
-    </defs>
-    <rect width="300" height="300" fill="url(#sg)"/>
-    <ellipse cx="150" cy="275" rx="82" ry="15" fill="#B4D9A0" opacity=".45"/>
-    <ellipse cx="150" cy="270" rx="72" ry="10" fill="#C4B474" opacity=".65"/>
-    <ellipse cx="150" cy="267" rx="66" ry="7" fill="#D2BC82"/>
-    <path d="M104 267 Q106 261 108 267" stroke="#6CC35A" stroke-width="1.5" fill="none"/>
-    <path d="M192 267 Q194 261 196 267" stroke="#6CC35A" stroke-width="1.5" fill="none"/>
-  `;
-  let tree = '';
-  if (stage === 0) {
-    tree = `
-      <path d="M150 266 Q149 253 150 237 Q151 225 149 214" stroke="#5B9E3A" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M150 241 Q136 230 126 235 Q135 247 150 247" fill="#7FCC5E"/>
-      <path d="M150 253 Q164 239 174 243 Q166 256 150 257" fill="#6BBF4E"/>
-      <path d="M149 214 Q144 208 148 203" stroke="#5B9E3A" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <circle cx="148" cy="202" r="4.5" fill="#7FCC5E"/>
-    `;
-  } else if (stage === 1) {
-    tree = `
-      <path d="M148 266 Q141 272 133 270" stroke="#8B5E3C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <path d="M152 266 Q159 272 167 270" stroke="#8B5E3C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <path d="M147 266 Q145 245 147 211" stroke="#9B6B42" stroke-width="9" fill="none" stroke-linecap="round"/>
-      <path d="M153 266 Q155 245 153 211" stroke="#B87E52" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <circle cx="150" cy="191" r="37" fill="#4BA836"/>
-      <circle cx="129" cy="203" r="23" fill="#54B83F"/>
-      <circle cx="171" cy="203" r="23" fill="#54B83F"/>
-      <circle cx="150" cy="180" r="27" fill="#62CC4C"/>
-      <circle cx="150" cy="187" r="17" fill="#74D95E"/>
-    `;
-  } else if (stage === 2) {
-    tree = `
-      <path d="M147 266 Q139 274 129 272" stroke="#8B5E3C" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M153 266 Q161 274 171 272" stroke="#8B5E3C" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M145 266 Q136 276 124 276" stroke="#7A5230" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <path d="M145 266 Q143 239 145 196" stroke="#9B6B42" stroke-width="14" fill="none" stroke-linecap="round"/>
-      <path d="M155 266 Q157 239 155 196" stroke="#B87E52" stroke-width="8" fill="none" stroke-linecap="round"/>
-      <path d="M146 223 Q130 213 118 218" stroke="#8B5E3C" stroke-width="6" fill="none" stroke-linecap="round"/>
-      <path d="M154 228 Q170 214 182 219" stroke="#8B5E3C" stroke-width="6" fill="none" stroke-linecap="round"/>
-      <circle cx="150" cy="166" r="49" fill="#40982C"/>
-      <circle cx="120" cy="182" r="31" fill="#4DAA38"/>
-      <circle cx="180" cy="182" r="31" fill="#4DAA38"/>
-      <circle cx="137" cy="155" r="30" fill="#5CBD46"/>
-      <circle cx="163" cy="155" r="30" fill="#5CBD46"/>
-      <circle cx="150" cy="146" r="26" fill="#6ECF58"/>
-    `;
-  } else {
-    /* Stage 3 — tall, full tree reaching near top of viewport */
-    tree = `
-      <path d="M146 267 Q133 278 114 276" stroke="#7A5230" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-      <path d="M154 267 Q167 278 186 276" stroke="#7A5230" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-      <path d="M143 267 Q128 282 108 284" stroke="#6B4520" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-      <path d="M157 267 Q172 282 192 284" stroke="#6B4520" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-      <path d="M143 267 Q140 234 142 156" stroke="#9B6B42" stroke-width="19" fill="none" stroke-linecap="round"/>
-      <path d="M157 267 Q160 234 158 156" stroke="#B87E52" stroke-width="9" fill="none" stroke-linecap="round"/>
-      <path d="M149 254 Q151 224 149 204" stroke="#C4A27A" stroke-width="1.5" opacity=".35" fill="none"/>
-      <path d="M144 222 Q122 208 100 212" stroke="#9B6B42" stroke-width="9" fill="none" stroke-linecap="round"/>
-      <path d="M156 222 Q178 208 200 212" stroke="#9B6B42" stroke-width="9" fill="none" stroke-linecap="round"/>
-      <path d="M145 196 Q126 180 110 182" stroke="#8B5E3C" stroke-width="7" fill="none" stroke-linecap="round"/>
-      <path d="M155 196 Q174 180 190 182" stroke="#8B5E3C" stroke-width="7" fill="none" stroke-linecap="round"/>
-      <path d="M146 172 Q132 158 120 160" stroke="#7A5230" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <path d="M154 172 Q168 158 180 160" stroke="#7A5230" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <circle cx="150" cy="210" r="44" fill="#2E8020"/>
-      <circle cx="108" cy="220" r="34" fill="#338A24"/>
-      <circle cx="192" cy="220" r="34" fill="#338A24"/>
-      <circle cx="128" cy="185" r="38" fill="#3C9830"/>
-      <circle cx="172" cy="185" r="38" fill="#3C9830"/>
-      <circle cx="150" cy="178" r="42" fill="#44A638"/>
-      <circle cx="116" cy="152" r="34" fill="#4EB440"/>
-      <circle cx="184" cy="152" r="34" fill="#4EB440"/>
-      <circle cx="150" cy="145" r="40" fill="#58C248"/>
-      <circle cx="130" cy="116" r="32" fill="#64D054"/>
-      <circle cx="170" cy="116" r="32" fill="#64D054"/>
-      <circle cx="150" cy="108" r="36" fill="#70DC60"/>
-      <circle cx="140" cy="80" r="28" fill="#7CEA6C"/>
-      <circle cx="160" cy="80" r="28" fill="#7CEA6C"/>
-      <circle cx="150" cy="62" r="26" fill="#88F278"/>
-      <circle cx="150" cy="44" r="18" fill="#96FA86"/>
-    `;
-  }
-
-  const flowerPos = {
-    1: [{x:130,y:178},{x:168,y:181},{x:150,y:167},{x:132,y:198},{x:168,y:196}],
-    2: [{x:115,y:174},{x:185,y:176},{x:137,y:143},{x:163,y:144},{x:150,y:134},{x:123,y:164},{x:177,y:165}],
-    3: [{x:98,y:214},{x:202,y:216},{x:113,y:179},{x:187,y:181},{x:150,y:174},
-        {x:118,y:147},{x:182,y:149},{x:132,y:111},{x:168,y:113},
-        {x:150,y:82},{x:142,y:76},{x:158,y:78}]
-  };
-  const fruitPos = {
-    1: [{x:126,y:203},{x:150,y:175},{x:174,y:205}],
-    2: [{x:111,y:186},{x:150,y:137},{x:189,y:187},{x:133,y:154},{x:167,y:156}],
-    3: [{x:96,y:221},{x:204,y:223},{x:108,y:188},{x:192,y:190},
-        {x:118,y:157},{x:182,y:159},{x:149,y:147},{x:149,y:109},
-        {x:141,y:75},{x:159,y:77}]
-  };
-
-  let flowers = '';
-  if (hasFlowers && stage >= 1 && flowerPos[stage]) {
-    flowerPos[stage].forEach(p => {
-      flowers += `<g transform="translate(${p.x},${p.y})">
-        <circle cx="-5.5" cy="0" r="5" fill="#FFB3CF" opacity=".92"/>
-        <circle cx="5.5" cy="0" r="5" fill="#FFCFDE" opacity=".92"/>
-        <circle cx="0" cy="-5.5" r="5" fill="#FFB3CF" opacity=".92"/>
-        <circle cx="0" cy="5.5" r="5" fill="#FFCFDE" opacity=".92"/>
-        <circle r="5" fill="#FFB3CF" opacity=".92"/>
-        <circle r="3.2" fill="#FFE566"/>
-      </g>`;
-    });
-  }
-  let fruit = '';
-  if (hasFruit && stage >= 1 && fruitPos[stage]) {
-    fruitPos[stage].forEach(p => {
-      fruit += `<g transform="translate(${p.x},${p.y})">
-        <path d="M0 -9 Q2.5 -15 1 -18" stroke="#4A7C2F" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <circle r="8.5" fill="#E0263A"/>
-        <circle cx="2.5" cy="-3" r="2.8" fill="rgba(255,255,255,.22)" transform="rotate(-25 2.5 -3)"/>
-      </g>`;
-    });
-  }
-  return SKY + tree + flowers + fruit;
-}
+// trGenerateTree removed — replaced by aquarium canvas renderer
 
 function trCelebrate() {
+  // Burst sparkles in the aquarium canvas center
+  if (trAq.canvas) {
+    const cx = trAq.canvas.width  * 0.5;
+    const cy = trAq.canvas.height * 0.45;
+    trAqSparkle(cx, cy, 28);
+  }
+  // Also overlay emoji pop
   const overlay = document.getElementById('celebOverlay');
-  const treeSvg = document.getElementById('treeSvg');
-  treeSvg.classList.remove('celebrating');
-  void treeSvg.offsetWidth;
-  treeSvg.classList.add('celebrating');
-  setTimeout(() => treeSvg.classList.remove('celebrating'), 850);
   overlay.innerHTML = '';
   overlay.style.display = 'block';
-  const emojis = ['⭐','✨','🌟','💫','🎉','🌸','💐','🏆'];
-  for (let i = 0; i < 16; i++) {
+  const emojis = ['⭐','✨','🌟','💫','🎉','🐠','🐟','🏆'];
+  for (let i = 0; i < 14; i++) {
     const s = document.createElement('div');
     s.className = 'sparkle';
     s.textContent = emojis[i % emojis.length];
-    s.style.left   = (10 + Math.random() * 80) + '%';
-    s.style.top    = (20 + Math.random() * 65) + '%';
+    s.style.left   = (8 + Math.random() * 84) + '%';
+    s.style.top    = (15 + Math.random() * 70) + '%';
     s.style.fontSize = (13 + Math.random() * 13) + 'px';
-    s.style.animationDelay = (Math.random() * .7) + 's';
+    s.style.animationDelay = (Math.random() * .6) + 's';
     overlay.appendChild(s);
   }
-  setTimeout(() => { overlay.style.display = 'none'; overlay.innerHTML = ''; }, 2600);
+  setTimeout(() => { overlay.style.display = 'none'; overlay.innerHTML = ''; }, 2400);
 }
 
 function trRenderAll() {
@@ -1666,16 +1535,16 @@ function trRenderCenter() {
   const student = trSelected();
   if (!student) {
     document.getElementById('statsBar').innerHTML = '<div class="stats-empty">Select a student to view progress</div>';
-    document.getElementById('treeSvg').innerHTML  = trGenerateTree(0, false, false);
-    document.getElementById('stageLabel').textContent = '🌱 Add a student to get started';
+    document.getElementById('stageLabel').textContent = '🐠 Add a student to get started';
     document.getElementById('progressFill').style.width = '0%';
     document.getElementById('progressText').textContent = '';
+    trAqUpdate(0, 0);
     return;
   }
-  const st    = trStats(student);
-  const stage = trStage(st.goalMetDays);
+  const st  = trStats(student);
+  const gmd = st.goalMetDays;
   document.getElementById('statsBar').innerHTML = [
-    { icon:'🔥', val: st.currentStreak + (st.currentStreak >= 3 ? ' 🌸' : ''), label:'Streak' },
+    { icon:'🔥', val: st.currentStreak + (st.currentStreak >= 3 ? ' 🫧' : ''), label:'Streak' },
     { icon:'📅', val: st.daysLogged,  label:'Days Logged' },
     { icon:'📊', val: st.daysLogged ? st.avgPct + '%' : '—', label:'Avg Score' },
     { icon:'🎯', val: student.goalPct + '%', label:'Daily Goal' },
@@ -1685,14 +1554,21 @@ function trRenderCenter() {
     <div class="stat-val">${c.val}</div>
     <div class="stat-label">${c.label}</div>
   </div>`).join('');
-  document.getElementById('treeSvg').innerHTML = trGenerateTree(stage, st.currentStreak >= 3, st.currentStreak >= 5);
-  const stageNames = ['🌱 Seedling','🌿 Sapling','🌳 Young Tree','🌲 Full Tree'];
-  const nextT = [5, 10, 20, Infinity];
-  const thresholds = [0, 5, 10, 20];
-  const pct = stage === 3 ? 100 : Math.min(100, Math.round(((st.goalMetDays - thresholds[stage]) / (nextT[stage] - thresholds[stage])) * 100));
-  document.getElementById('stageLabel').textContent  = `${stageNames[stage]}  —  ${escHtml(student.name)}`;
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressText').textContent = stage === 3 ? '🌲 Maximum growth reached!' : `${st.goalMetDays} / ${nextT[stage]} goal days to next stage`;
+  trAqUpdate(gmd, st.currentStreak);
+  // Progress bar to next aquarium milestone
+  const milestoneThresholds = [0,1,2,3,5,7,10,12,15,20,25];
+  const nextMs = milestoneThresholds.find(n => n > gmd) || null;
+  const prevMs = [...milestoneThresholds].reverse().find(n => n <= gmd) || 0;
+  const aqIcon = gmd >= 25 ? '🐢' : gmd >= 20 ? '🪼' : gmd >= 15 ? '🦀' : gmd >= 12 ? '🐡' : gmd >= 10 ? '🌿' : gmd >= 7 ? '🐠' : gmd >= 5 ? '🪸' : gmd >= 3 ? '🐟' : gmd >= 2 ? '🏰' : gmd >= 1 ? '🏖️' : '🐠';
+  document.getElementById('stageLabel').textContent = `${aqIcon}  ${escHtml(student.name)}'s Aquarium`;
+  if (nextMs !== null) {
+    const pct = Math.round(((gmd - prevMs) / (nextMs - prevMs)) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `${gmd} / ${nextMs} goal days to next addition`;
+  } else {
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressText').textContent = '🌊 Full aquarium unlocked!';
+  }
 }
 
 function trRenderEntryForm() {
@@ -1903,8 +1779,404 @@ function handleAddStudent() {
   trRenderAll();
 }
 
+// ════════════════════════════════════════════════
+// AQUARIUM ENGINE
+// ════════════════════════════════════════════════
+
+const AQ_W = 500, AQ_H = 290, AQ_FLOOR = 248;
+const AQ_SEAWEED_X  = [52, 138, 348, 432];
+const AQ_CORAL_POS  = [{x:192,h:34,c:'#FF6B8A'},{x:284,h:26,c:'#FF9F1C'},{x:94,h:22,c:'#A855F7'}];
+const AQ_BUBBLE_COL = [62, 152, 252, 358, 444];
+
+const trAq = {
+  canvas:null, ctx:null, raf:null,
+  fish:[], bubbles:[], jellies:[], sparkles:[],
+  crab:{x:80, dir:1}, turtle:{x:-90, dir:1},
+  goalMetDays:0, streak:0, prevGoalMetDays:-1,
+};
+
+function trAqMilestones(g) {
+  return {
+    hasSand:g>=1, hasDecor:g>=2, hasFish1:g>=3, hasCoral:g>=5,
+    hasFish2:g>=7, hasSeaweed:g>=10, hasFish3:g>=12, hasLightRays:g>=12,
+    hasCrab:g>=15, hasJellyfish:g>=20, hasTurtle:g>=25,
+  };
+}
+
+function trAqInit() {
+  const c = document.getElementById('aquariumCanvas');
+  if (!c) return;
+  trAq.canvas = c; trAq.ctx = c.getContext('2d');
+  c.width = AQ_W; c.height = AQ_H;
+  trAq.bubbles = AQ_BUBBLE_COL.flatMap(() =>
+    Array.from({length:4}, () => _aqNewBubble(true)));
+}
+
+function _aqNewBubble(randomY) {
+  const col = AQ_BUBBLE_COL[Math.floor(Math.random() * AQ_BUBBLE_COL.length)];
+  return { x: col + (Math.random()-.5)*10, y: randomY ? Math.random()*AQ_FLOOR : AQ_FLOOR,
+           r: 2+Math.random()*2.5, speed: .35+Math.random()*.5, alpha: .3+Math.random()*.35 };
+}
+
+function trAqUpdate(gmd, streak) {
+  const prev = trAq.goalMetDays;
+  trAq.goalMetDays = gmd; trAq.streak = streak;
+  const needed = gmd >= 12 ? 3 : gmd >= 7 ? 2 : gmd >= 3 ? 1 : 0;
+  while (trAq.fish.length < needed) {
+    const sp = trAq.fish.length;
+    trAq.fish.push({
+      x: AQ_W/2, yBase: 62 + sp*52 + Math.random()*18,
+      dir: Math.random()<.5?1:-1, speed: 38+Math.random()*28,
+      amp: 6+Math.random()*7, phase: Math.random()*Math.PI*2,
+      species: sp, scale: .88+Math.random()*.26, isNew: gmd > prev,
+    });
+  }
+  const m = trAqMilestones(gmd);
+  if (m.hasJellyfish && trAq.jellies.length === 0) {
+    trAq.jellies.push({x:AQ_W*.28, y:52, phase:0,   dir:1,  speed:16, isNew:gmd>prev});
+    trAq.jellies.push({x:AQ_W*.72, y:88, phase:2.1, dir:-1, speed:13, isNew:false});
+  }
+  if (gmd > prev) trAqSparkle(AQ_W/2, AQ_H/2, 22);
+}
+
+function trAqSparkle(cx, cy, n) {
+  const cols = ['#FFD700','#FF6B6B','#06D6A0','#3A86FF','#FF9F1C','#E879F9'];
+  for (let i=0; i<n; i++) {
+    const a = Math.random()*Math.PI*2, sp = 1.2+Math.random()*3;
+    trAq.sparkles.push({x:cx,y:cy, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-1,
+      r:2+Math.random()*3, alpha:1, color:cols[i%cols.length]});
+  }
+}
+
+function trAqStart() {
+  if (!trAq.canvas) return;
+  if (trAq.raf) cancelAnimationFrame(trAq.raf);
+  let prev = 0;
+  function loop(ts) {
+    const dt = Math.min((ts-prev)/1000, .05); prev = ts;
+    _aqDraw(ts/1000, dt);
+    trAq.raf = requestAnimationFrame(loop);
+  }
+  trAq.raf = requestAnimationFrame(loop);
+}
+
+function trAqStop() {
+  if (trAq.raf) { cancelAnimationFrame(trAq.raf); trAq.raf = null; }
+}
+
+function _aqRRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
+}
+
+function _aqDraw(t, dt) {
+  const {canvas:cv, ctx, fish, bubbles, jellies, sparkles} = trAq;
+  if (!ctx) return;
+  const W=AQ_W, H=AQ_H, FL=AQ_FLOOR;
+  const g=trAq.goalMetDays, str=trAq.streak;
+  const m=trAqMilestones(g);
+
+  // ── Background ──────────────────────────────────
+  const bg = ctx.createLinearGradient(0,0,0,H);
+  if (str >= 5) { bg.addColorStop(0,'#005F73'); bg.addColorStop(1,'#0A9396'); }
+  else          { bg.addColorStop(0,'#072B4A'); bg.addColorStop(1,'#0E4D78'); }
+  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+  // ── Light rays ──────────────────────────────────
+  if (m.hasLightRays) {
+    ctx.save();
+    for (let i=0; i<7; i++) {
+      const rx = W*0.15 + i*(W*0.12);
+      const pulse = .025 + .018*Math.sin(t*.45+i*1.1);
+      ctx.beginPath();
+      ctx.moveTo(rx, 0);
+      ctx.lineTo(rx - 55, H*.95); ctx.lineTo(rx + 55, H*.95);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(255,255,220,${pulse})`; ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ── Seaweed ─────────────────────────────────────
+  if (m.hasSeaweed) AQ_SEAWEED_X.forEach((sx,i) => _aqSeaweed(ctx,sx,FL,t,i));
+
+  // ── Sand floor ──────────────────────────────────
+  if (m.hasSand) {
+    const sg = ctx.createLinearGradient(0,FL,0,H);
+    sg.addColorStop(0,'#C8964A'); sg.addColorStop(1,'#A07030');
+    ctx.fillStyle = sg; ctx.fillRect(0,FL,W,H-FL);
+    ctx.save();
+    for (let i=0; i<70; i++) {
+      const gx=((i*139+17)%W), gy=FL+3+((i*67)%16), gr=1.2+(i%3)*.7;
+      ctx.beginPath(); ctx.arc(gx,gy,gr,0,Math.PI*2);
+      ctx.fillStyle = i%3===0?'#7A5230':i%3===1?'#B8823C':'#906040'; ctx.fill();
+    }
+    ctx.restore();
+  } else {
+    ctx.fillStyle = '#051E35'; ctx.fillRect(0,FL,W,H-FL);
+  }
+
+  // ── Coral ───────────────────────────────────────
+  if (m.hasCoral) AQ_CORAL_POS.forEach(c => _aqCoral(ctx,c.x,FL,c.h,c.c));
+
+  // ── Decoration (castle) ─────────────────────────
+  if (m.hasDecor) _aqCastle(ctx, 224, FL);
+
+  // ── Crab ────────────────────────────────────────
+  if (m.hasCrab) {
+    trAq.crab.x += trAq.crab.dir * 10 * dt;
+    if (trAq.crab.x > W-36) trAq.crab.dir=-1;
+    if (trAq.crab.x < 36)   trAq.crab.dir= 1;
+    _aqCrab(ctx, trAq.crab.x, FL, trAq.crab.dir, t);
+  }
+
+  // ── Fish ────────────────────────────────────────
+  fish.forEach(f => {
+    f.x += f.dir * f.speed * dt;
+    if (f.x > W+44) { f.x=W+44; f.dir=-1; }
+    if (f.x < -44)  { f.x=-44;  f.dir= 1; }
+    const fy = f.yBase + f.amp*Math.sin(t*1.15+f.phase);
+    _aqFish(ctx, f.x, fy, f.dir, f.species, f.scale);
+  });
+
+  // ── Jellyfish ───────────────────────────────────
+  jellies.forEach(j => {
+    j.phase += dt*.75; j.x += j.dir*j.speed*dt;
+    if (j.x > W+55) j.x=-55;
+    if (j.x < -55)  j.x=W+55;
+    _aqJellyfish(ctx, j.x, j.y+20*Math.sin(j.phase), t);
+  });
+
+  // ── Sea turtle ──────────────────────────────────
+  if (m.hasTurtle) {
+    trAq.turtle.x += trAq.turtle.dir * 20 * dt;
+    if (trAq.turtle.x > W+90) trAq.turtle.x=-90;
+    if (trAq.turtle.x < -90)  trAq.turtle.x=W+90;
+    const ty = 98 + 14*Math.sin(t*.38);
+    _aqTurtle(ctx, trAq.turtle.x, ty, trAq.turtle.dir, t);
+  }
+
+  // ── Rare streak creature (manta ray, streak ≥ 10) ──
+  if (str >= 10) _aqManta(ctx, W, H, t);
+
+  // ── Bubbles (streak ≥ 3) ────────────────────────
+  if (str >= 3) {
+    bubbles.forEach(b => {
+      b.y -= b.speed; b.x += Math.sin(t*1.4+b.x*.09)*.28;
+      if (b.y < -8) Object.assign(b, _aqNewBubble(false));
+      ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+      ctx.strokeStyle = `rgba(180,220,255,${b.alpha})`; ctx.lineWidth=1; ctx.stroke();
+      ctx.beginPath(); ctx.arc(b.x-b.r*.28,b.y-b.r*.28,b.r*.32,0,Math.PI*2);
+      ctx.fillStyle = `rgba(255,255,255,${b.alpha*.55})`; ctx.fill();
+    });
+  }
+
+  // ── Sparkles ────────────────────────────────────
+  for (let i=sparkles.length-1; i>=0; i--) {
+    const s=sparkles[i];
+    s.x+=s.vx; s.y+=s.vy; s.vy+=.055; s.alpha-=.022;
+    if (s.alpha<=0) { sparkles.splice(i,1); continue; }
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r*s.alpha,0,Math.PI*2);
+    ctx.fillStyle=s.color; ctx.globalAlpha=s.alpha; ctx.fill(); ctx.globalAlpha=1;
+  }
+
+  // ── Locked previews ─────────────────────────────
+  _aqLockedPreviews(ctx, W, g, str);
+
+  // ── Tank glass border ───────────────────────────
+  ctx.save();
+  ctx.strokeStyle = str>=5 ? '#4DD6E0' : '#4A9AC4';
+  ctx.lineWidth = 5;
+  _aqRRect(ctx,2,2,W-4,H-4,9); ctx.stroke();
+  const sheen = ctx.createLinearGradient(0,0,70,70);
+  sheen.addColorStop(0,'rgba(255,255,255,.14)'); sheen.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle = sheen; _aqRRect(ctx,2,2,W-4,H-4,9); ctx.fill();
+  ctx.restore();
+}
+
+// ── Element drawers ────────────────────────────────
+
+function _aqSeaweed(ctx, x, fy, t, idx) {
+  const segs=5, segH=15, amp=7, freq=1.4;
+  const cols=['#1A8A3A','#22A045','#18782C','#2BB84E'];
+  ctx.save(); ctx.lineWidth=4; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.strokeStyle=cols[idx%cols.length];
+  ctx.beginPath();
+  let px=x, py=fy; ctx.moveTo(px,py);
+  for (let s=0; s<segs; s++) {
+    const ny=py-segH, sx=x+Math.sin(t*freq+idx+s*.65)*amp*((s+1)/segs);
+    ctx.bezierCurveTo(px+5,py-segH/3, sx+5,ny+segH/3, sx,ny);
+    px=sx; py=ny;
+  }
+  ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(px,py,5,9,Math.sin(t*freq+idx)*.4,0,Math.PI*2);
+  ctx.fillStyle=cols[idx%cols.length]; ctx.fill(); ctx.restore();
+}
+
+function _aqCoral(ctx, x, fy, h, color) {
+  ctx.save(); ctx.strokeStyle=color; ctx.lineCap='round';
+  function branch(bx,by,bh,d) {
+    ctx.lineWidth=Math.max(1.5,4-d+1);
+    ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(bx,by-bh); ctx.stroke();
+    if (d===0) { ctx.beginPath(); ctx.arc(bx,by-bh,4,0,Math.PI*2); ctx.fillStyle=color; ctx.fill(); return; }
+    branch(bx-bh*.55,by-bh,bh*.6,d-1); branch(bx+bh*.55,by-bh,bh*.6,d-1);
+  }
+  branch(x,fy,h*.55,2); ctx.restore();
+}
+
+function _aqCastle(ctx, x, fy) {
+  ctx.save();
+  const b=fy-2;
+  ctx.fillStyle='#607080'; ctx.fillRect(x-20,b-34,40,34);
+  ctx.fillStyle='#506070';
+  [[x-20,b-41],[x-8,b-41],[x+4,b-41],[x+16,b-41]].forEach(([rx,ry])=>ctx.fillRect(rx,ry,8,10));
+  ctx.fillStyle='#202C3A'; ctx.beginPath(); ctx.arc(x,b-10,8,Math.PI,0);
+  ctx.rect(x-8,b-10,16,10); ctx.fill();
+  ctx.fillStyle='#506070'; ctx.fillRect(x-32,b-28,13,28); ctx.fillRect(x+19,b-28,13,28);
+  ctx.fillStyle='#405060';
+  [x-32,x+19].forEach(tx=>{ ctx.fillRect(tx,b-36,5,9); ctx.fillRect(tx+8,b-36,5,9); });
+  ctx.fillStyle='rgba(40,120,60,.35)'; ctx.fillRect(x-20,b-34,40,5);
+  ctx.restore();
+}
+
+function _aqFish(ctx, x, y, dir, species, sc) {
+  const sp=[
+    {body:'#FF6B35',belly:'#FFA07A',fin:'#E04010',hasStripe:true},
+    {body:'#1E90FF',belly:'#87CEEB',fin:'#0050CC',hasStripe:false},
+    {body:'#FFD700',belly:'#FFFACD',fin:'#FFA500',hasStripe:false},
+  ][Math.min(species,2)];
+  const W=30*sc, H=16*sc;
+  ctx.save(); ctx.translate(x,y); if(dir<0) ctx.scale(-1,1);
+  // tail
+  ctx.beginPath(); ctx.moveTo(-W/2,0); ctx.lineTo(-W/2-11*sc,-H/2-2*sc); ctx.lineTo(-W/2-11*sc,H/2+2*sc);
+  ctx.fillStyle=sp.fin; ctx.fill();
+  // body
+  ctx.beginPath(); ctx.ellipse(0,0,W/2,H/2,0,0,Math.PI*2); ctx.fillStyle=sp.body; ctx.fill();
+  // belly
+  ctx.beginPath(); ctx.ellipse(3*sc,2*sc,W/3,H/3,0,0,Math.PI*2); ctx.fillStyle=sp.belly; ctx.fill();
+  // clownfish stripe
+  if (sp.hasStripe) {
+    ctx.save(); ctx.beginPath(); ctx.ellipse(0,0,W/2,H/2,0,0,Math.PI*2); ctx.clip();
+    ctx.fillStyle='rgba(255,255,255,.68)'; ctx.fillRect(-3*sc,-H/2,6*sc,H); ctx.restore();
+  }
+  // dorsal fin
+  ctx.beginPath(); ctx.moveTo(-W/6,-H/2); ctx.lineTo(W/6,-H/2-5*sc); ctx.lineTo(W/3,-H/2);
+  ctx.fillStyle=sp.fin; ctx.fill();
+  // eye
+  ctx.beginPath(); ctx.arc(W/2-7*sc,-2*sc,3*sc,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.beginPath(); ctx.arc(W/2-6*sc,-2*sc,1.8*sc,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill();
+  ctx.restore();
+}
+
+function _aqCrab(ctx, x, fy, dir, t) {
+  ctx.save(); ctx.translate(x,fy-8); if(dir<0) ctx.scale(-1,1);
+  ctx.beginPath(); ctx.ellipse(0,0,14,9,0,0,Math.PI*2);
+  ctx.fillStyle='#CC3300'; ctx.fill(); ctx.strokeStyle='#AA1100'; ctx.lineWidth=1; ctx.stroke();
+  [[-5,-5],[5,-5]].forEach(([ex,ey])=>{ ctx.beginPath(); ctx.arc(ex,ey,2.5,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill(); });
+  const ca=Math.sin(t*3)*1.5;
+  [[-14,-2,1],[ 14,-2,-1]].forEach(([sx,sy,si])=>{
+    ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx+si*9,-8+ca*si); ctx.lineTo(sx+si*13,-5+ca*si);
+    ctx.lineWidth=2.5; ctx.strokeStyle='#CC3300'; ctx.stroke();
+  });
+  for(let i=0;i<3;i++){const lx=-8+i*7,ly=Math.sin(t*3+i)*2;
+    ctx.beginPath(); ctx.moveTo(lx,6); ctx.lineTo(lx-4,14+ly); ctx.lineWidth=1.5; ctx.strokeStyle='#BB2000'; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(lx,6); ctx.lineTo(lx+4,14-ly); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function _aqJellyfish(ctx, x, y, t) {
+  ctx.save(); ctx.translate(x,y);
+  const pulse=1+.05*Math.sin(t*2); ctx.scale(pulse,1);
+  const gr=ctx.createRadialGradient(0,0,2,0,0,28);
+  gr.addColorStop(0,'rgba(205,185,255,.92)'); gr.addColorStop(1,'rgba(150,95,255,.38)');
+  ctx.beginPath(); ctx.arc(0,0,28,Math.PI,0); ctx.fillStyle=gr; ctx.fill();
+  ctx.beginPath(); ctx.arc(0,0,18,Math.PI,0); ctx.fillStyle='rgba(225,205,255,.42)'; ctx.fill();
+  for(let i=0;i<6;i++){
+    const tx=-20+i*8, tl=20+10*Math.sin(t*1.4+i*.8);
+    ctx.beginPath(); ctx.moveTo(tx,2);
+    ctx.bezierCurveTo(tx+5,8+tl*.3,tx-5,8+tl*.6,tx+Math.sin(t+i)*6,tl);
+    ctx.strokeStyle='rgba(180,145,255,.55)'; ctx.lineWidth=1.5; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function _aqTurtle(ctx, x, y, dir, t) {
+  ctx.save(); ctx.translate(x,y); if(dir<0) ctx.scale(-1,1);
+  ctx.translate(0,Math.sin(t*.8)*3);
+  const fa=Math.sin(t*1.4)*.3;
+  [[-24,-5,-.3+fa],[-24,8,.2-fa],[20,-5,.3+fa],[20,8,-.1-fa]].forEach(([fx,fy,ang],i)=>{
+    ctx.save(); ctx.rotate(ang);
+    ctx.beginPath(); ctx.ellipse(fx,fy,i<2?13:9,i<2?5.5:4.5,i<2?(i===0?-.3:.2):(i===2?.3:-.2),0,Math.PI*2);
+    ctx.fillStyle='#3B8A4F'; ctx.fill(); ctx.restore();
+  });
+  const sg=ctx.createRadialGradient(-3,-5,3,0,0,24);
+  sg.addColorStop(0,'#4CAF50'); sg.addColorStop(1,'#2E7D32');
+  ctx.beginPath(); ctx.ellipse(0,0,24,18,0,0,Math.PI*2); ctx.fillStyle=sg; ctx.fill();
+  ctx.strokeStyle='#1B5E20'; ctx.lineWidth=1;
+  ctx.beginPath();
+  for(let i=0;i<6;i++){const a=i/6*Math.PI*2;i===0?ctx.moveTo(Math.cos(a)*8,Math.sin(a)*6):ctx.lineTo(Math.cos(a)*8,Math.sin(a)*6);}
+  ctx.closePath(); ctx.stroke();
+  for(let i=0;i<6;i++){const a=i/6*Math.PI*2;ctx.beginPath();ctx.moveTo(Math.cos(a)*8,Math.sin(a)*6);ctx.lineTo(Math.cos(a)*22,Math.sin(a)*16);ctx.stroke();}
+  ctx.beginPath(); ctx.ellipse(28,0,10,8,.1,0,Math.PI*2); ctx.fillStyle='#4CAF50'; ctx.fill();
+  ctx.beginPath(); ctx.arc(33,-3,2.5,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.beginPath(); ctx.arc(33,-3,1.5,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill();
+  ctx.restore();
+}
+
+function _aqManta(ctx, W, H, t) {
+  const x = ((t*18)%(W+180))-90;
+  const y = H*.22 + 20*Math.sin(t*.28);
+  ctx.save(); ctx.translate(x, y);
+  const flap=Math.sin(t*1.8)*.18;
+  ctx.beginPath(); ctx.moveTo(0,0);
+  ctx.bezierCurveTo(-30,-28-flap*60,-70,4,  -78,8);
+  ctx.bezierCurveTo(-58,14,  -8,6+flap*20,  0,18);
+  ctx.bezierCurveTo( 8,6+flap*20, 58,14,    78,8);
+  ctx.bezierCurveTo( 70,4,  30,-28-flap*60, 0,0);
+  ctx.fillStyle='rgba(40,55,100,.78)'; ctx.fill();
+  ctx.beginPath(); ctx.ellipse(0,10,6,4,0,0,Math.PI*2); ctx.fillStyle='rgba(60,80,130,.8)'; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0,18); ctx.lineTo(18,52+Math.sin(t*2)*4); ctx.strokeStyle='rgba(40,55,100,.6)'; ctx.lineWidth=2.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(-12,2,2,0,Math.PI*2); ctx.fillStyle='rgba(200,220,255,.7)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(12,2,2,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function _aqLockedPreviews(ctx, W, gmd, streak) {
+  const upcoming = [
+    {days:3,label:'Fish',icon:'🐟'},{days:5,label:'Coral',icon:'🪸'},
+    {days:7,label:'2nd Fish',icon:'🐠'},{days:10,label:'Seaweed',icon:'🌿'},
+    {days:12,label:'3rd Fish',icon:'🐡'},{days:15,label:'Crab',icon:'🦀'},
+    {days:20,label:'Jellyfish',icon:'🪼'},{days:25,label:'Sea Turtle',icon:'🐢'},
+    {days:30,label:'???',icon: streak>=10?'🦈':'❓'},
+  ].filter(m=>m.days>gmd).slice(0,3);
+  if (!upcoming.length) return;
+  const pw=82, ph=26, gap=6;
+  const totalW = upcoming.length*(pw+gap)-gap;
+  let px = W-totalW-8;
+  upcoming.forEach(m=>{
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,.48)';
+    _aqRRect(ctx,px,8,pw,ph,7); ctx.fill();
+    ctx.font='13px serif'; ctx.fillText(m.icon, px+6, 8+19);
+    ctx.fillStyle='rgba(255,255,255,.78)';
+    ctx.font='bold 8px Nunito,sans-serif';
+    ctx.fillText('🔒 '+m.days+' days', px+24, 8+12);
+    ctx.fillStyle='rgba(255,255,255,.52)';
+    ctx.font='7.5px Nunito,sans-serif';
+    ctx.fillText(m.label, px+24, 8+22);
+    ctx.restore();
+    px += pw+gap;
+  });
+}
+
 function initTracker() {
   trLoad();
+  trAqInit();
+  trAqStart();
   document.getElementById('fDate').value = trToday();
   trRenderAll();
 }
