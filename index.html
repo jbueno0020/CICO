@@ -715,6 +715,54 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
   display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .btn-save:hover { box-shadow: 0 5px 16px rgba(58,134,255,.35); transform: translateY(-1px); }
+.btn-bulk-days {
+  font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
+  padding: 8px; background: #F0F7FF; color: var(--blue);
+  border: 1.5px dashed #90BDF9; border-radius: 8px; cursor: pointer;
+  transition: background .12s; width: 100%; text-align: center;
+}
+.btn-bulk-days:hover { background: #DDE9FF; }
+
+/* Bulk log modal */
+.bulk-modal { width: min(92vw, 660px); }
+.bulk-modal-body { padding: 12px 16px 4px; max-height: 54vh; overflow-y: auto; }
+.bulk-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+.bulk-table th {
+  background: #EEF4FF; color: var(--blue); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .3px; padding: 6px 5px;
+  border-bottom: 1.5px solid #D0E2FF; white-space: nowrap;
+}
+.bulk-table th:nth-child(1) { width: 130px; }
+.bulk-table th:nth-child(2),
+.bulk-table th:nth-child(3) { width: 74px; }
+.bulk-table th:nth-child(4) { width: 50px; }
+.bulk-table th:nth-child(5) { width: auto; }
+.bulk-table th:nth-child(6) { width: 30px; }
+.bulk-table td { padding: 4px 4px; border-bottom: 1px solid #F1F4FA; vertical-align: middle; }
+.bulk-table input {
+  font-family: 'Nunito', sans-serif; font-size: 12px; padding: 5px 6px;
+  border: 1.5px solid var(--border); border-radius: 6px; outline: none;
+  width: 100%; background: #fff; color: var(--text);
+  transition: border-color .15s, box-shadow .12s;
+  box-sizing: border-box;
+}
+.bulk-table input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(58,134,255,.1); }
+.bulk-pct-cell { text-align: center; font-size: 12px; font-weight: 800; }
+.bulk-remove-btn {
+  background: none; border: none; color: var(--coral); font-size: 14px;
+  cursor: pointer; padding: 3px 5px; border-radius: 5px; line-height: 1;
+  transition: background .12s; display: block; margin: auto;
+}
+.bulk-remove-btn:hover { background: #FFE5E5; }
+.bulk-add-row-btn {
+  font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
+  margin: 10px 0 14px; padding: 7px 14px;
+  background: #F0F7FF; color: var(--blue);
+  border: 1.5px dashed #90BDF9; border-radius: 7px; cursor: pointer;
+  transition: background .12s; display: block;
+}
+.bulk-add-row-btn:hover { background: #DDE9FF; }
+.bulk-summary { font-size: 11px; color: var(--muted); margin: 0 16px 12px; font-style: italic; }
 
 .trend-panel { flex-shrink: 0; }
 .trend-toggle {
@@ -1006,6 +1054,7 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
             <textarea id="fNotes" rows="2" placeholder="Any observations about today…"></textarea>
           </div>
           <button class="btn-save" onclick="handleSaveEntry()">💾 Save Entry</button>
+          <button class="btn-bulk-days" onclick="openBulkModal()">📅 Log Multiple Days</button>
         </div>
       </div>
       <div class="panel trend-panel">
@@ -1026,6 +1075,30 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- Bulk Log Modal -->
+<div class="modal-overlay" id="bulkModal" style="display:none" onclick="bulkOverlayClick(event)">
+  <div class="modal bulk-modal">
+    <div class="modal-header">
+      <div class="modal-title" id="bulkModalTitle">📅 Log Multiple Days</div>
+      <button class="modal-close" onclick="closeBulkModal()">✕</button>
+    </div>
+    <div class="bulk-modal-body">
+      <table class="bulk-table">
+        <thead><tr>
+          <th>Date</th><th>Earned</th><th>Possible</th><th>%</th><th>Notes</th><th></th>
+        </tr></thead>
+        <tbody id="bulkRows"></tbody>
+      </table>
+      <button class="bulk-add-row-btn" onclick="bulkAddRow()">＋ Add Row</button>
+    </div>
+    <p class="bulk-summary" id="bulkSummary"></p>
+    <div class="modal-footer">
+      <button class="btn-modal ghost" onclick="closeBulkModal()">Cancel</button>
+      <button class="btn-modal primary" onclick="handleBulkSave()">💾 Save All</button>
+    </div>
   </div>
 </div>
 
@@ -1750,6 +1823,142 @@ function trRenderLogTable(student, wrapId) {
   </table>`;
 }
 
+// ── Bulk log modal ──────────────────────────────
+let _bulkRowId = 0;
+
+function openBulkModal() {
+  const student = trSelected();
+  if (!student) return;
+  document.getElementById('bulkModalTitle').textContent = `📅 Log Multiple Days — ${escHtml(student.name)}`;
+  document.getElementById('bulkRows').innerHTML = '';
+  document.getElementById('bulkSummary').textContent = '';
+  _bulkRowId = 0;
+  // Pre-fill last 3 days (most recent first)
+  for (let i = 0; i < 3; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    bulkAddRow(d.toISOString().slice(0, 10));
+  }
+  document.getElementById('bulkModal').style.display = 'flex';
+  // Focus first earned input
+  setTimeout(() => { const f = document.querySelector('#bulkRows .b-earned'); if(f) f.focus(); }, 60);
+}
+
+function closeBulkModal() {
+  document.getElementById('bulkModal').style.display = 'none';
+}
+
+function bulkOverlayClick(e) {
+  if (e.target === document.getElementById('bulkModal')) closeBulkModal();
+}
+
+function bulkAddRow(date) {
+  const student = trSelected();
+  const defPossible = student ? student.pointsPerDay : '';
+  const id = ++_bulkRowId;
+  const tr = document.createElement('tr');
+  tr.id = 'brow-' + id;
+  tr.innerHTML = `
+    <td><input type="date" class="b-date" value="${date||''}" /></td>
+    <td><input type="number" class="b-earned" min="0" max="9999" placeholder="0" oninput="bulkUpdatePct(this)" /></td>
+    <td><input type="number" class="b-possible" min="1" max="9999" placeholder="${defPossible}" value="${defPossible}" oninput="bulkUpdatePct(this)" /></td>
+    <td class="bulk-pct-cell"><span class="b-pct" style="color:var(--muted)">—</span></td>
+    <td><input type="text" class="b-notes" placeholder="Notes…" /></td>
+    <td><button class="bulk-remove-btn" onclick="bulkRemoveRow('brow-${id}')" title="Remove">✕</button></td>`;
+  document.getElementById('bulkRows').appendChild(tr);
+  _bulkRefreshSummary();
+}
+
+function bulkRemoveRow(rowId) {
+  const tbody = document.getElementById('bulkRows');
+  if (tbody.children.length <= 1) return; // keep at least one row
+  const row = document.getElementById(rowId);
+  if (row) row.remove();
+  _bulkRefreshSummary();
+}
+
+function bulkUpdatePct(input) {
+  const student = trSelected();
+  const row = input.closest('tr');
+  const earned   = parseInt(row.querySelector('.b-earned').value);
+  const possible = parseInt(row.querySelector('.b-possible').value);
+  const pctEl    = row.querySelector('.b-pct');
+  if (isNaN(earned) || isNaN(possible) || possible <= 0) {
+    pctEl.textContent = '—'; pctEl.style.color = 'var(--muted)'; return;
+  }
+  if (earned > possible) {
+    pctEl.textContent = '!'; pctEl.style.color = 'var(--coral)'; return;
+  }
+  const pct     = Math.round((earned / possible) * 100);
+  const goalMet = student && pct >= student.goalPct;
+  pctEl.textContent = pct + '%';
+  pctEl.style.color = goalMet ? '#059D74' : 'var(--coral)';
+  _bulkRefreshSummary();
+}
+
+function _bulkRefreshSummary() {
+  const rows = document.querySelectorAll('#bulkRows tr');
+  const student = trSelected();
+  let filled = 0, goalCount = 0;
+  rows.forEach(row => {
+    const earned   = parseInt(row.querySelector('.b-earned').value);
+    const possible = parseInt(row.querySelector('.b-possible').value);
+    if (!isNaN(earned) && !isNaN(possible) && possible > 0 && earned <= possible && row.querySelector('.b-date').value) {
+      filled++;
+      if (student && Math.round((earned/possible)*100) >= student.goalPct) goalCount++;
+    }
+  });
+  const el = document.getElementById('bulkSummary');
+  el.textContent = filled ? `${filled} ready to save · ${goalCount} goal met` : '';
+}
+
+function handleBulkSave() {
+  const student = trSelected();
+  if (!student) return;
+  const rows    = document.querySelectorAll('#bulkRows tr');
+  const entries = [], errors = [];
+
+  rows.forEach((row, i) => {
+    const date     = row.querySelector('.b-date').value;
+    const earned   = parseInt(row.querySelector('.b-earned').value);
+    const possible = parseInt(row.querySelector('.b-possible').value);
+    const notes    = row.querySelector('.b-notes').value.trim();
+    const label    = `Row ${i+1}`;
+    if (!date)                               { errors.push(`${label}: date required.`); return; }
+    if (isNaN(earned) || earned < 0)         { errors.push(`${label}: invalid points earned.`); return; }
+    if (isNaN(possible) || possible < 1)     { errors.push(`${label}: invalid points possible.`); return; }
+    if (earned > possible)                   { errors.push(`${label}: earned exceeds possible.`); return; }
+    entries.push({ date, earned, possible, notes });
+  });
+
+  if (errors.length)  { alert(errors.join('\n')); return; }
+  if (!entries.length){ alert('No valid entries to save.'); return; }
+
+  // Within-batch duplicate: keep last occurrence per date
+  const deduped = [];
+  entries.forEach(e => {
+    const idx = deduped.findIndex(d => d.date === e.date);
+    if (idx !== -1) deduped.splice(idx, 1);
+    deduped.push(e);
+  });
+
+  // Count existing entries that will be replaced
+  let replaced = 0, anyGoalMet = false;
+  deduped.forEach(e => {
+    const idx = student.logs.findIndex(l => l.date === e.date);
+    if (idx !== -1) { student.logs.splice(idx, 1); replaced++; }
+    const pct = Math.round((e.earned / e.possible) * 100);
+    const goalMet = pct >= student.goalPct;
+    if (goalMet) anyGoalMet = true;
+    student.logs.push({ date: e.date, earned: e.earned, possible: e.possible, pct, goalMet, notes: e.notes });
+  });
+
+  trSave();
+  closeBulkModal();
+  trRenderAll();
+  if (trTrendOpen) trRenderTrend();
+  if (anyGoalMet) trCelebrate();
+}
+
 function openStudentModal() {
   document.getElementById('addStudentModal').style.display = 'flex';
   document.getElementById('mName').value    = '';
@@ -2307,6 +2516,7 @@ initTracker();
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (document.getElementById('chartModal').style.display !== 'none') closeTrendModal();
+    else if (document.getElementById('bulkModal').style.display !== 'none') closeBulkModal();
     else if (document.getElementById('addStudentModal').style.display !== 'none') closeStudentModal();
   }
 });
