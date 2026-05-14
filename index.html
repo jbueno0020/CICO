@@ -622,6 +622,18 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
 .btn-add-student:disabled { opacity: .45; cursor: not-allowed; }
 
 /* Center panel */
+.theme-bar {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; padding: 7px 14px 0; flex-shrink: 0;
+}
+.theme-btn {
+  font-family: 'Nunito', sans-serif; font-size: 11.5px; font-weight: 700;
+  padding: 5px 12px; border-radius: 99px; border: 1.5px solid var(--border);
+  background: #F7F9FF; color: var(--muted); cursor: pointer;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.theme-btn:hover { background: #EEF4FF; border-color: #C8D9FF; color: var(--text); }
+.theme-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
 .center-panel {
   flex: 1; min-width: 0;
   display: flex; flex-direction: column; overflow: hidden;
@@ -1014,6 +1026,10 @@ input[type="range"].zoom-slider::-webkit-slider-thumb {
     <div class="center-panel panel">
       <div class="stats-bar" id="statsBar">
         <div class="stats-empty">Select a student to view their progress</div>
+      </div>
+      <div class="theme-bar">
+        <button class="theme-btn active" data-theme="aquarium" onclick="setTheme('aquarium')">🐠 Aquarium</button>
+        <button class="theme-btn"        data-theme="rocket"   onclick="setTheme('rocket')">🚀 Rocket</button>
       </div>
       <div class="aquarium-area" id="aquariumArea">
         <div class="celeb-overlay" id="celebOverlay"></div>
@@ -1606,18 +1622,20 @@ function trRemoveStudent(id) {
 
 function trRenderCenter() {
   const student = trSelected();
+  const isRocket = trTheme === 'rocket';
   if (!student) {
     document.getElementById('statsBar').innerHTML = '<div class="stats-empty">Select a student to view progress</div>';
-    document.getElementById('stageLabel').textContent = '🐠 Add a student to get started';
+    document.getElementById('stageLabel').textContent = isRocket ? '🚀 Add a student to get started' : '🐠 Add a student to get started';
     document.getElementById('progressFill').style.width = '0%';
     document.getElementById('progressText').textContent = '';
-    trAqUpdate(0, 0);
+    if (isRocket) _rocketUpdate(0, 0); else trAqUpdate(0, 0);
     return;
   }
   const st  = trStats(student);
   const gmd = st.goalMetDays;
+  const streakEmoji = isRocket ? (st.currentStreak >= 3 ? ' 🔥' : '') : (st.currentStreak >= 3 ? ' 🫧' : '');
   document.getElementById('statsBar').innerHTML = [
-    { icon:'🔥', val: st.currentStreak + (st.currentStreak >= 3 ? ' 🫧' : ''), label:'Streak' },
+    { icon:'🔥', val: st.currentStreak + streakEmoji, label:'Streak' },
     { icon:'📅', val: st.daysLogged,  label:'Days Logged' },
     { icon:'📊', val: st.daysLogged ? st.avgPct + '%' : '—', label:'Avg Score' },
     { icon:'🎯', val: student.goalPct + '%', label:'Daily Goal' },
@@ -1627,20 +1645,40 @@ function trRenderCenter() {
     <div class="stat-val">${c.val}</div>
     <div class="stat-label">${c.label}</div>
   </div>`).join('');
-  trAqUpdate(gmd, st.currentStreak);
-  // Progress bar to next aquarium milestone
-  const milestoneThresholds = [0,1,2,3,5,7,10,12,15,20,25];
-  const nextMs = milestoneThresholds.find(n => n > gmd) || null;
-  const prevMs = [...milestoneThresholds].reverse().find(n => n <= gmd) || 0;
-  const aqIcon = gmd >= 25 ? '🐢' : gmd >= 20 ? '🪼' : gmd >= 15 ? '🦀' : gmd >= 12 ? '🐡' : gmd >= 10 ? '🌿' : gmd >= 7 ? '🐠' : gmd >= 5 ? '🪸' : gmd >= 3 ? '🐟' : gmd >= 2 ? '🏰' : gmd >= 1 ? '🏖️' : '🐠';
-  document.getElementById('stageLabel').textContent = `${aqIcon}  ${escHtml(student.name)}'s Aquarium`;
-  if (nextMs !== null) {
-    const pct = Math.round(((gmd - prevMs) / (nextMs - prevMs)) * 100);
-    document.getElementById('progressFill').style.width = pct + '%';
-    document.getElementById('progressText').textContent = `${gmd} / ${nextMs} goal days to next addition`;
+
+  if (isRocket) {
+    _rocketUpdate(gmd, st.currentStreak);
+    const RMS = [{d:1,l:'Launch Pad'},{d:2,l:'Engine'},{d:3,l:'Lower Body'},{d:5,l:'Fins'},
+                 {d:7,l:'Upper Body'},{d:10,l:'Nose Cone'},{d:12,l:'Window'},{d:15,l:'Mission Patch'},
+                 {d:20,l:'Fueled Up'},{d:25,l:'Liftoff! 🚀'}];
+    const nextR = RMS.find(m => m.d > gmd);
+    const prevR = [...RMS].reverse().find(m => m.d <= gmd);
+    const rIcon = gmd >= 25 ? '🚀' : gmd >= 20 ? '⛽' : gmd >= 15 ? '🏅' : gmd >= 12 ? '🪟' : gmd >= 10 ? '🔭' : gmd >= 7 ? '🛸' : gmd >= 5 ? '🛩️' : gmd >= 3 ? '📦' : gmd >= 2 ? '🔧' : gmd >= 1 ? '🛖' : '🚀';
+    document.getElementById('stageLabel').textContent = `${rIcon}  ${escHtml(student.name)}'s Rocket`;
+    if (nextR) {
+      const prevD = prevR ? prevR.d : 0;
+      const pct = Math.round(((gmd - prevD) / (nextR.d - prevD)) * 100);
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressText').textContent = `${gmd} / ${nextR.d} goal days to ${nextR.l}`;
+    } else {
+      document.getElementById('progressFill').style.width = '100%';
+      document.getElementById('progressText').textContent = '🚀 Rocket fully assembled — mission launched!';
+    }
   } else {
-    document.getElementById('progressFill').style.width = '100%';
-    document.getElementById('progressText').textContent = '🌊 Full aquarium unlocked!';
+    trAqUpdate(gmd, st.currentStreak);
+    const milestoneThresholds = [0,1,2,3,5,7,10,12,15,20,25];
+    const nextMs = milestoneThresholds.find(n => n > gmd) || null;
+    const prevMs = [...milestoneThresholds].reverse().find(n => n <= gmd) || 0;
+    const aqIcon = gmd >= 25 ? '🐢' : gmd >= 20 ? '🪼' : gmd >= 15 ? '🦀' : gmd >= 12 ? '🐡' : gmd >= 10 ? '🌿' : gmd >= 7 ? '🐠' : gmd >= 5 ? '🪸' : gmd >= 3 ? '🐟' : gmd >= 2 ? '🏰' : gmd >= 1 ? '🏖️' : '🐠';
+    document.getElementById('stageLabel').textContent = `${aqIcon}  ${escHtml(student.name)}'s Aquarium`;
+    if (nextMs !== null) {
+      const pct = Math.round(((gmd - prevMs) / (nextMs - prevMs)) * 100);
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressText').textContent = `${gmd} / ${nextMs} goal days to next addition`;
+    } else {
+      document.getElementById('progressFill').style.width = '100%';
+      document.getElementById('progressText').textContent = '🌊 Full aquarium unlocked!';
+    }
   }
 }
 
@@ -2071,13 +2109,31 @@ function trAqSparkle(cx, cy, n) {
   }
 }
 
+// ── Theme ─────────────────────────────────────────
+let trTheme = localStorage.getItem('cico_theme_v1') || 'aquarium';
+
+function setTheme(theme) {
+  trTheme = theme;
+  localStorage.setItem('cico_theme_v1', theme);
+  document.querySelectorAll('.theme-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.theme === theme));
+  // Reset rocket flight so it re-lands on theme switch
+  if (theme === 'rocket') { trRocket.launchY = 0; trRocket.launched = false; }
+  const student = trSelected();
+  const st = student ? trStats(student) : null;
+  if (theme === 'rocket') _rocketUpdate(st ? st.goalMetDays : 0, st ? st.currentStreak : 0);
+  else trAqUpdate(st ? st.goalMetDays : 0, st ? st.currentStreak : 0);
+  trRenderCenter();
+}
+
 function trAqStart() {
   if (!trAq.canvas) return;
   if (trAq.raf) cancelAnimationFrame(trAq.raf);
   let prev = 0;
   function loop(ts) {
     const dt = Math.min((ts-prev)/1000, .05); prev = ts;
-    _aqDraw(ts/1000, dt);
+    if (trTheme === 'rocket') _rocketDraw(ts/1000, dt);
+    else _aqDraw(ts/1000, dt);
     trAq.raf = requestAnimationFrame(loop);
   }
   trAq.raf = requestAnimationFrame(loop);
@@ -2499,9 +2555,299 @@ function _aqLockedPreviews(ctx, W, gmd, streak) {
   });
 }
 
+// ════════════════════════════════════════════════
+// ROCKET THEME ENGINE
+// ════════════════════════════════════════════════
+
+const RK_W = AQ_W, RK_H = AQ_H;
+const RK_PAD_Y  = RK_H - 28;
+const RK_CX     = RK_W / 2;
+const RK = { ENG_H:28, BODY1_H:52, BODY2_H:50, CONE_H:58, WIDTH:40 };
+const RK_BASE_Y = RK_PAD_Y - 6;
+
+const trRocket = {
+  goalMetDays:0, streak:0,
+  launchY:0, launchSpeed:0, launched:false,
+  exhaust:[],
+  stars: Array.from({length:90}, () => ({
+    x: Math.random()*AQ_W, y: Math.random()*AQ_H,
+    r: .4+Math.random()*1.4, a: .4+Math.random()*.6,
+  })),
+};
+
+function _rocketMilestones(g) {
+  return {
+    hasPad:g>=1, hasEngine:g>=2, hasBody1:g>=3, hasFins:g>=5,
+    hasBody2:g>=7, hasCone:g>=10, hasWindow:g>=12, hasDecal:g>=15,
+    hasFuel:g>=20, launched:g>=25,
+  };
+}
+
+function _rocketUpdate(gmd, streak) {
+  const wasLaunched = trRocket.launched;
+  trRocket.goalMetDays = gmd; trRocket.streak = streak;
+  const m = _rocketMilestones(gmd);
+  if (m.launched && !wasLaunched) {
+    trRocket.launchSpeed = 55; trRocket.launched = true;
+    trAqSparkle(RK_CX, RK_BASE_Y - 100, 30);
+  }
+  if (!m.launched) { trRocket.launchY=0; trRocket.launched=false; trRocket.launchSpeed=0; }
+}
+
+function _rocketDraw(t, dt) {
+  const {ctx} = trAq; if (!ctx) return;
+  const W=RK_W, H=RK_H;
+  const g=trRocket.goalMetDays, str=trRocket.streak;
+  const m=_rocketMilestones(g);
+
+  _rocketBg(ctx,W,H,m,str,t);
+  if (m.launched) _rocketStars(ctx,W,H,t,dt);
+  if (m.launched && trRocket.launchY>60) _rocketClouds(ctx,W,H,t);
+  if (m.hasPad) _rocketPad(ctx,W,H,m,t);
+  if (m.launched) _rocketExhaustCloud(ctx,W,H,dt,t);
+
+  const rY = RK_BASE_Y - trRocket.launchY;
+  _rocketBody(ctx,RK_CX,rY,m,t);
+  if (m.launched||(m.hasFuel&&!m.launched)) _rocketFlame(ctx,RK_CX,rY,t,m.launched);
+
+  if (m.launched) {
+    trRocket.launchSpeed = Math.min(trRocket.launchSpeed+10*dt, 160);
+    trRocket.launchY    += trRocket.launchSpeed*dt;
+    const totalH = RK_BASE_Y+RK.ENG_H+RK.BODY1_H+RK.BODY2_H+RK.CONE_H+30;
+    if (rY < -totalH) { trRocket.launchY=0; trRocket.launchSpeed=55; }
+  }
+
+  const sparkles=trAq.sparkles;
+  for(let i=sparkles.length-1;i>=0;i--){
+    const s=sparkles[i];
+    s.x+=s.vx; s.y+=s.vy; s.vy+=.055; s.alpha-=.022;
+    if(s.alpha<=0){sparkles.splice(i,1);continue;}
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r*s.alpha,0,Math.PI*2);
+    ctx.fillStyle=s.color; ctx.globalAlpha=s.alpha; ctx.fill(); ctx.globalAlpha=1;
+  }
+
+  _rocketLockedPreviews(ctx,W,g);
+
+  ctx.save();
+  ctx.fillStyle='#1A2530';
+  ctx.fillRect(0,0,W,9); ctx.fillRect(0,H-7,W,7);
+  ctx.fillRect(0,0,7,H); ctx.fillRect(W-7,0,7,H);
+  const fHL=ctx.createLinearGradient(0,0,0,9);
+  fHL.addColorStop(0,'rgba(255,255,255,.15)'); fHL.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=fHL; ctx.fillRect(0,0,W,9);
+  [[9,11],[W-9,11],[9,H-9],[W-9,H-9]].forEach(([sx,sy])=>{
+    ctx.beginPath(); ctx.arc(sx,sy,2.5,0,Math.PI*2); ctx.fillStyle='#384A5C'; ctx.fill();
+  });
+  ctx.restore();
+}
+
+function _rocketBg(ctx,W,H,m,str,t){
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  if(m.launched){
+    bg.addColorStop(0,'#000005'); bg.addColorStop(.5,'#08062A'); bg.addColorStop(1,'#12082E');
+  } else if(str>=5){
+    bg.addColorStop(0,'#1A0A2E'); bg.addColorStop(.55,'#3D1C72'); bg.addColorStop(1,'#F4845F');
+  } else {
+    bg.addColorStop(0,'#060B18'); bg.addColorStop(1,'#0D1F3C');
+  }
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  if(!m.launched){
+    if(str>=5){
+      const sg=ctx.createRadialGradient(W*.15,H*.78,4,W*.15,H*.78,38);
+      sg.addColorStop(0,'rgba(255,220,80,1)'); sg.addColorStop(1,'rgba(255,140,20,0)');
+      ctx.beginPath(); ctx.arc(W*.15,H*.78,28,0,Math.PI*2); ctx.fillStyle=sg; ctx.fill();
+    } else {
+      ctx.save(); ctx.beginPath(); ctx.arc(W*.82,H*.14,22,0,Math.PI*2);
+      ctx.fillStyle='rgba(230,235,200,.85)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(W*.82+10,H*.14-4,18,0,Math.PI*2);
+      ctx.fillStyle='rgba(6,11,24,1)'; ctx.fill(); ctx.restore();
+    }
+  }
+}
+
+function _rocketStars(ctx,W,H,t,dt){
+  const scroll=trRocket.launchSpeed*dt*.18;
+  trRocket.stars.forEach(s=>{
+    s.y+=scroll; if(s.y>H) s.y-=H;
+    const tw=s.a*(.7+.3*Math.sin(t*2.2+s.x));
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,240,${tw})`; ctx.fill();
+  });
+}
+
+function _rocketClouds(ctx,W,H,t){
+  const clouds=[{x:.18,y:.45,r:24},{x:.52,y:.35,r:18},{x:.78,y:.48,r:22},{x:.3,y:.6,r:16},{x:.65,y:.58,r:20}];
+  clouds.forEach((c,i)=>{
+    const cx=W*c.x, cy=H*c.y+12*Math.sin(t*.25+i);
+    const op=Math.min(.28,(trRocket.launchY-60)/200*.28);
+    ctx.save(); ctx.globalAlpha=op;
+    [0,.6*c.r,-.6*c.r].forEach((ox,j)=>{
+      ctx.beginPath(); ctx.arc(cx+ox,cy+(j?c.r*.28:0),j?c.r*.67:c.r,0,Math.PI*2);
+      ctx.fillStyle='#CBD8E6'; ctx.fill();
+    });
+    ctx.globalAlpha=1; ctx.restore();
+  });
+}
+
+function _rocketPad(ctx,W,H,m,t){
+  ctx.save();
+  const py=RK_PAD_Y;
+  ctx.fillStyle='#4A5568';
+  ctx.fillRect(RK_CX-110,py-90,14,90);
+  ctx.fillRect(RK_CX-110,py-62,56,6);
+  ctx.fillRect(RK_CX-98,py-90,52,6);
+  ctx.strokeStyle='#6A7A8A'; ctx.lineWidth=2;
+  for(let i=0;i<3;i++){
+    ctx.beginPath(); ctx.moveTo(RK_CX-110,py-26-i*22); ctx.lineTo(RK_CX-96,py-22-i*22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(RK_CX-96,py-26-i*22);  ctx.lineTo(RK_CX-110,py-22-i*22); ctx.stroke();
+  }
+  const pGrad=ctx.createLinearGradient(0,py-6,0,py+14);
+  pGrad.addColorStop(0,'#5A6A7C'); pGrad.addColorStop(1,'#3A4A5C');
+  ctx.fillStyle=pGrad; ctx.fillRect(RK_CX-100,py-6,200,20);
+  ctx.fillStyle='#3A4A5C';
+  [RK_CX-80,RK_CX-40,RK_CX,RK_CX+40,RK_CX+80].forEach(lx=>ctx.fillRect(lx-3,py+12,6,H-py-12));
+  const fpG=ctx.createLinearGradient(0,py+8,0,py+18);
+  fpG.addColorStop(0,'#1A1A2A'); fpG.addColorStop(1,'#0A0A16');
+  ctx.fillStyle=fpG; ctx.fillRect(RK_CX-30,py+6,60,12);
+  if(m.hasFuel&&!m.launched){
+    for(let i=0;i<4;i++){
+      const vx=RK_CX-50+i*34, ph=t*2+i;
+      ctx.save(); ctx.globalAlpha=.18+.1*Math.sin(ph);
+      ctx.beginPath(); ctx.arc(vx,py-20+8*Math.sin(ph),10+6*Math.sin(ph+1),0,Math.PI*2);
+      ctx.fillStyle='#A0C4D8'; ctx.fill(); ctx.globalAlpha=1; ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+
+function _rocketBody(ctx,cx,baseY,m,t){
+  if(!m.hasEngine&&!m.hasBody1) return;
+  ctx.save();
+  const W2=RK.WIDTH/2;
+  if(m.hasEngine){
+    const eG=ctx.createLinearGradient(cx-W2,baseY-RK.ENG_H,cx+W2,baseY);
+    eG.addColorStop(0,'#8A9BB0'); eG.addColorStop(1,'#4A5B6C');
+    ctx.beginPath(); ctx.moveTo(cx-W2*.6,baseY-RK.ENG_H); ctx.lineTo(cx+W2*.6,baseY-RK.ENG_H);
+    ctx.lineTo(cx+W2,baseY); ctx.lineTo(cx-W2,baseY); ctx.closePath();
+    ctx.fillStyle=eG; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx,baseY-RK.ENG_H,W2*.6,5,0,0,Math.PI*2);
+    ctx.fillStyle='#6A7A8C'; ctx.fill();
+  }
+  if(m.hasBody1){
+    const b1y=baseY-RK.ENG_H;
+    const b1G=ctx.createLinearGradient(cx-W2,0,cx+W2,0);
+    b1G.addColorStop(0,'#C8D4E0'); b1G.addColorStop(.4,'#F0F4F8');
+    b1G.addColorStop(.7,'#E0E8F0'); b1G.addColorStop(1,'#A8B8C8');
+    ctx.fillStyle=b1G; ctx.fillRect(cx-W2,b1y-RK.BODY1_H,RK.WIDTH,RK.BODY1_H);
+    ctx.fillStyle='rgba(80,100,120,.25)';
+    ctx.fillRect(cx-W2,b1y-RK.BODY1_H*.45,RK.WIDTH,4);
+    ctx.fillRect(cx-W2,b1y-RK.BODY1_H*.8,RK.WIDTH,3);
+  }
+  if(m.hasFins){
+    const fy=baseY-RK.ENG_H-8;
+    ctx.fillStyle='#C0303A';
+    [[cx-W2,fy,cx-W2-28,fy+16,cx-W2,fy-24],[cx+W2,fy,cx+W2+28,fy+16,cx+W2,fy-24]].forEach(p=>{
+      ctx.beginPath(); ctx.moveTo(p[0],p[1]); ctx.lineTo(p[2],p[3]); ctx.lineTo(p[4],p[5]);
+      ctx.closePath(); ctx.fill();
+    });
+  }
+  if(m.hasBody2){
+    const b2y=baseY-RK.ENG_H-RK.BODY1_H;
+    const b2G=ctx.createLinearGradient(cx-W2,0,cx+W2,0);
+    b2G.addColorStop(0,'#C8D4E0'); b2G.addColorStop(.4,'#F4F8FC');
+    b2G.addColorStop(.7,'#E4ECF4'); b2G.addColorStop(1,'#A8B8C8');
+    ctx.fillStyle=b2G; ctx.fillRect(cx-W2,b2y-RK.BODY2_H,RK.WIDTH,RK.BODY2_H);
+    ctx.fillStyle='rgba(40,100,200,.35)';
+    ctx.fillRect(cx-W2,b2y-14,RK.WIDTH,6); ctx.fillRect(cx-W2,b2y-RK.BODY2_H+8,RK.WIDTH,4);
+  }
+  if(m.hasCone){
+    const cb=baseY-RK.ENG_H-RK.BODY1_H-RK.BODY2_H, ct=cb-RK.CONE_H;
+    const cG=ctx.createLinearGradient(cx-W2,0,cx+W2,0);
+    cG.addColorStop(0,'#C0CCD8'); cG.addColorStop(.35,'#EEF4FA');
+    cG.addColorStop(.7,'#D8E4EE'); cG.addColorStop(1,'#9AAABA');
+    ctx.beginPath(); ctx.moveTo(cx,ct); ctx.lineTo(cx+W2,cb); ctx.lineTo(cx-W2,cb);
+    ctx.closePath(); ctx.fillStyle=cG; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,ct+8,5,0,Math.PI*2); ctx.fillStyle='#7A8A9A'; ctx.fill();
+  }
+  if(m.hasWindow){
+    const wy=baseY-RK.ENG_H-RK.BODY1_H-RK.BODY2_H*.55;
+    ctx.beginPath(); ctx.arc(cx,wy,9,0,Math.PI*2); ctx.fillStyle='#2A5FC8'; ctx.fill();
+    ctx.strokeStyle='rgba(180,200,220,.8)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx-3,wy-3,4,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,.22)'; ctx.fill();
+  }
+  if(m.hasDecal){
+    const dy=baseY-RK.ENG_H-RK.BODY1_H*.48;
+    ctx.fillStyle='#CC2233'; ctx.fillRect(cx+W2*.3,dy-10,20,14);
+    ctx.fillStyle='#fff';    ctx.fillRect(cx+W2*.3,dy-10,20,5);
+    ctx.fillStyle='#2244BB'; ctx.fillRect(cx+W2*.3,dy-10,8,5);
+    ctx.fillStyle='#fff'; ctx.font='4px serif';
+    ['★','★','★'].forEach((s,i)=>ctx.fillText(s,cx+W2*.31+i*2.5,dy-6.5));
+  }
+  ctx.restore();
+}
+
+function _rocketFlame(ctx,cx,baseY,t,isFlying){
+  ctx.save();
+  const fk=Math.sin(t*18)*.18, fk2=Math.sin(t*24)*.12;
+  const fLen=isFlying?55+25*Math.sin(t*9):18+10*Math.sin(t*6);
+  const oG=ctx.createRadialGradient(cx,baseY,0,cx,baseY+fLen*.7,fLen);
+  oG.addColorStop(0,'rgba(255,180,20,.9)'); oG.addColorStop(.4,'rgba(255,80,0,.5)'); oG.addColorStop(1,'rgba(255,40,0,0)');
+  ctx.beginPath(); ctx.ellipse(cx,baseY+fLen*.55,22*(1+fk),fLen*.55,0,0,Math.PI*2);
+  ctx.fillStyle=oG; ctx.fill();
+  const iG=ctx.createLinearGradient(0,baseY,0,baseY+fLen*.7);
+  iG.addColorStop(0,'rgba(255,255,180,1)'); iG.addColorStop(.5,'rgba(255,160,20,.9)'); iG.addColorStop(1,'rgba(255,60,0,0)');
+  ctx.beginPath(); ctx.ellipse(cx,baseY+fLen*.35,10*(1+fk2),fLen*.38,0,0,Math.PI*2);
+  ctx.fillStyle=iG; ctx.fill();
+  ctx.restore();
+}
+
+function _rocketExhaustCloud(ctx,W,H,dt,t){
+  const cloud=trRocket.exhaust;
+  if(Math.random()<.4){
+    const ang=(Math.random()-.5)*1.2, sp=18+Math.random()*24;
+    cloud.push({x:RK_CX+(Math.random()-.5)*30, y:RK_PAD_Y,
+                vx:Math.sin(ang)*sp, vy:-Math.abs(Math.cos(ang))*sp*.4,
+                r:8+Math.random()*12, alpha:.6, life:1});
+  }
+  for(let i=cloud.length-1;i>=0;i--){
+    const p=cloud[i];
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.r+=12*dt; p.alpha-=.35*dt;
+    if(p.alpha<=0){cloud.splice(i,1);continue;}
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(180,185,195,${p.alpha})`; ctx.fill();
+  }
+  if(cloud.length>60) cloud.splice(0,cloud.length-60);
+}
+
+function _rocketLockedPreviews(ctx,W,gmd){
+  const parts=[
+    {d:1,l:'Launch Pad',i:'🛖'},{d:2,l:'Engine',i:'🔧'},{d:3,l:'Lower Body',i:'📦'},
+    {d:5,l:'Fins',i:'✈️'},{d:7,l:'Upper Body',i:'🛸'},{d:10,l:'Nose Cone',i:'🔭'},
+    {d:12,l:'Window',i:'🪟'},{d:15,l:'Mission Patch',i:'🏅'},
+    {d:20,l:'Fueled Up',i:'⛽'},{d:25,l:'Liftoff',i:'🚀'},
+  ].filter(m=>m.d>gmd).slice(0,3);
+  if(!parts.length) return;
+  const pw=82,ph=26,gap=6,totalW=parts.length*(pw+gap)-gap;
+  let px=W-totalW-8;
+  parts.forEach(m=>{
+    ctx.save(); ctx.fillStyle='rgba(0,0,0,.5)';
+    _aqRRect(ctx,px,8,pw,ph,7); ctx.fill();
+    ctx.font='13px serif'; ctx.fillText(m.i,px+6,8+19);
+    ctx.fillStyle='rgba(255,255,255,.78)'; ctx.font='bold 8px Nunito,sans-serif';
+    ctx.fillText('🔒 '+m.d+' days',px+24,8+12);
+    ctx.fillStyle='rgba(255,255,255,.52)'; ctx.font='7.5px Nunito,sans-serif';
+    ctx.fillText(m.l,px+24,8+22);
+    ctx.restore(); px+=pw+gap;
+  });
+}
+
 function initTracker() {
   trLoad();
   trAqInit();
+  // Restore saved theme button state
+  document.querySelectorAll('.theme-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.theme === trTheme));
   trAqStart();
   document.getElementById('fDate').value = trToday();
   trRenderAll();
