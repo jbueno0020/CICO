@@ -1666,10 +1666,10 @@ function trRenderCenter() {
     }
   } else {
     trAqUpdate(gmd, st.currentStreak);
-    const milestoneThresholds = [0,1,2,3,5,7,10,12,15,20,25];
+    const milestoneThresholds = [0,1,2,3,5,7,10,12,15,20,25,30];
     const nextMs = milestoneThresholds.find(n => n > gmd) || null;
     const prevMs = [...milestoneThresholds].reverse().find(n => n <= gmd) || 0;
-    const aqIcon = gmd >= 25 ? '🐢' : gmd >= 20 ? '🪼' : gmd >= 15 ? '🦀' : gmd >= 12 ? '🐡' : gmd >= 10 ? '🌿' : gmd >= 7 ? '🐠' : gmd >= 5 ? '🪸' : gmd >= 3 ? '🐟' : gmd >= 2 ? '🏰' : gmd >= 1 ? '🏖️' : '🐠';
+    const aqIcon = gmd >= 30 ? '🦈' : gmd >= 25 ? '🐢' : gmd >= 20 ? '🪼' : gmd >= 15 ? '🦀' : gmd >= 12 ? '🐡' : gmd >= 10 ? '🌿' : gmd >= 7 ? '🐠' : gmd >= 5 ? '🪸' : gmd >= 3 ? '🐟' : gmd >= 2 ? '🏰' : gmd >= 1 ? '🏖️' : '🐠';
     document.getElementById('stageLabel').textContent = `${aqIcon}  ${escHtml(student.name)}'s Aquarium`;
     if (nextMs !== null) {
       const pct = Math.round(((gmd - prevMs) / (nextMs - prevMs)) * 100);
@@ -2047,7 +2047,7 @@ function trAqMilestones(g) {
   return {
     hasSand:g>=1, hasDecor:g>=2, hasFish1:g>=3, hasCoral:g>=5,
     hasFish2:g>=7, hasSeaweed:g>=10, hasFish3:g>=12, hasLightRays:g>=12,
-    hasCrab:g>=15, hasJellyfish:g>=20, hasTurtle:g>=25,
+    hasCrab:g>=15, hasJellyfish:g>=20, hasTurtle:g>=25, hasShark:g>=30,
   };
 }
 
@@ -2250,8 +2250,8 @@ function _aqDraw(t, dt) {
     _aqTurtle(ctx, trAq.turtle.x, ty, trAq.turtle.dir, t);
   }
 
-  // ── Rare streak creature: shark (streak ≥ 10) ──
-  if (str >= 10) _aqShark(ctx, W, H, t);
+  // ── Shark (30 goal-met days) ─────────────────────
+  if (m.hasShark) _aqShark(ctx, W, H, t);
 
   // ── Bubbles (streak ≥ 3) ────────────────────────
   if (str >= 3) {
