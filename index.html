@@ -2519,15 +2519,14 @@ function _aqCoral(ctx, x, fy, h, color) {
 }
 
 function _aqCastle(ctx, x, fy, g) {
-  // scale grows smoothly from day 2 (tiny) up to day 25+ (grand)
-  const sc = Math.min(1.55, 0.42 + (g - 2) * 0.048);
+  // grows from tiny (day 2) to grand fortress (day 30)
+  const sc = Math.min(2.0, 0.36 + (g - 2) * 0.062);
   ctx.save();
-  // scale around the base centre point
   ctx.translate(x, fy); ctx.scale(sc, sc); ctx.translate(-x, -fy);
-  const b=fy-2;
+  const b = fy; // flush with sand — no gap
   // main keep
-  ctx.fillStyle='#607080'; ctx.fillRect(x-20,b-34,40,34);
-  // battlements (merlons) along keep top
+  ctx.fillStyle='#607080'; ctx.fillRect(x-20, b-34, 40, 34);
+  // keep battlements
   ctx.fillStyle='#506070';
   [[x-20,b-41],[x-8,b-41],[x+4,b-41],[x+16,b-41]].forEach(([rx,ry])=>ctx.fillRect(rx,ry,8,10));
   // gate arch
@@ -2538,13 +2537,13 @@ function _aqCastle(ctx, x, fy, g) {
   // tower battlements
   ctx.fillStyle='#405060';
   [x-32,x+19].forEach(tx=>{ ctx.fillRect(tx,b-36,5,9); ctx.fillRect(tx+8,b-36,5,9); });
-  // moss/algae accent along keep top
+  // moss accent
   ctx.fillStyle='rgba(40,120,60,.35)'; ctx.fillRect(x-20,b-34,40,5);
-  // flag on keep — appears from day 15 (after scaling so it stays proportional)
+  // flag — appears from day 15
   if (g >= 15) {
-    ctx.fillStyle='#506070'; ctx.fillRect(x-1,b-41-2,2,14); // pole
+    ctx.fillStyle='#506070'; ctx.fillRect(x-1,b-53,2,14);
     ctx.fillStyle='#CC2233';
-    ctx.beginPath(); ctx.moveTo(x+1,b-41-2); ctx.lineTo(x+11,b-41+4); ctx.lineTo(x+1,b-41+9); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x+1,b-53); ctx.lineTo(x+12,b-47); ctx.lineTo(x+1,b-42); ctx.fill();
   }
   ctx.restore();
 }
@@ -2686,53 +2685,149 @@ function _aqTurtle(ctx, x, y, dir, t) {
 }
 
 function _aqShark(ctx, W, H, t) {
-  const x = ((t*16) % (W+200)) - 100;
-  const swimY = H*.24 + 14*Math.sin(t*.22);
-  // body lean: shark tilts slightly with the sine wave
-  const leanAngle = Math.cos(t*.22) * 0.07;
+  const x = ((t*16) % (W+260)) - 130;
+  const swimY = H*.22 + 16*Math.sin(t*.22);
+  const leanAngle = Math.cos(t*.22) * 0.06;
   ctx.save(); ctx.translate(x, swimY); ctx.rotate(leanAngle);
-  const L=52, BH=17;
-  // tail wag (rotates relative to body)
-  const tailWag = Math.sin(t*3.6) * 0.28;
-  ctx.save(); ctx.translate(-L,0); ctx.rotate(tailWag);
-  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-20,-BH*1.6); ctx.lineTo(-10,0); ctx.lineTo(-20,BH*1.6); ctx.closePath();
-  ctx.fillStyle='#3A5668'; ctx.fill();
+
+  const L=82, BH=26;
+
+  // crescent tail — animated wag, two lobes
+  const tailWag = Math.sin(t*3.2) * 0.32;
+  ctx.save(); ctx.translate(-L*.88, 0); ctx.rotate(tailWag);
+  // upper lobe (larger)
+  ctx.beginPath();
+  ctx.moveTo(0, -2);
+  ctx.bezierCurveTo(-14, -BH*1.1, -30, -BH*2.1, -22, -BH*2.6);
+  ctx.bezierCurveTo(-12, -BH*2.8, -2, -BH*1.5, 8, -BH*.3);
+  ctx.closePath();
+  ctx.fillStyle='#2B3F52'; ctx.fill();
+  // lower lobe (smaller)
+  ctx.beginPath();
+  ctx.moveTo(0, 2);
+  ctx.bezierCurveTo(-10, BH*.8, -22, BH*1.6, -16, BH*1.9);
+  ctx.bezierCurveTo(-8, BH*2.1, 0, BH*1.2, 8, BH*.3);
+  ctx.closePath();
+  ctx.fillStyle='#2B3F52'; ctx.fill();
   ctx.restore();
-  // pectoral fins
-  ctx.beginPath(); ctx.moveTo(-L*.05,BH*.3); ctx.lineTo(-L*.45,BH*2.4); ctx.lineTo(L*.25,BH*.9);
-  ctx.fillStyle='#3E5C70'; ctx.fill();
-  // body with gradient
-  const bg2=ctx.createLinearGradient(0,-BH,0,BH);
-  bg2.addColorStop(0,'#4E6E84'); bg2.addColorStop(.55,'#607E92'); bg2.addColorStop(1,'#DDE8EC');
-  ctx.beginPath(); ctx.ellipse(0,0,L,BH,0,0,Math.PI*2); ctx.fillStyle=bg2; ctx.fill();
-  // specular highlight on top
-  const sg=ctx.createLinearGradient(0,-BH,0,-BH*.2);
-  sg.addColorStop(0,'rgba(255,255,255,.14)'); sg.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.beginPath(); ctx.ellipse(-L*.05,-BH*.4,L*.82,BH*.45,0,0,Math.PI*2); ctx.fillStyle=sg; ctx.fill();
-  // white belly patch
-  ctx.beginPath(); ctx.ellipse(4,BH*.38,L*.65,BH*.48,0,0,Math.PI*2);
-  ctx.fillStyle='rgba(230,242,245,.62)'; ctx.fill();
-  // dorsal fin with slight sway
-  const dorsalSway = Math.sin(t*3.6+1.0)*0.12;
-  ctx.save(); ctx.rotate(dorsalSway);
-  ctx.beginPath(); ctx.moveTo(-L*.08,-BH); ctx.lineTo(L*.12,-BH*3.2); ctx.lineTo(L*.52,-BH*1.3); ctx.lineTo(L*.42,-BH); ctx.closePath();
-  ctx.fillStyle='#3A5668'; ctx.fill(); ctx.restore();
-  // small caudal keel
-  ctx.beginPath(); ctx.moveTo(-L*.7,-BH*.25); ctx.lineTo(-L*.85,-BH*.8); ctx.lineTo(-L*.6,-BH*.25); ctx.fillStyle='#3A5668'; ctx.fill();
-  ctx.beginPath(); ctx.moveTo(-L*.7,BH*.25); ctx.lineTo(-L*.85,BH*.8); ctx.lineTo(-L*.6,BH*.25); ctx.fill();
-  // gill slits
-  ctx.lineWidth=1.4; ctx.strokeStyle='rgba(25,45,58,.55)';
-  for(let i=0;i<4;i++){const gx=-L*.12+i*7; ctx.beginPath(); ctx.moveTo(gx,-BH*.45); ctx.lineTo(gx+1.5,BH*.3); ctx.stroke();}
-  // eye with shine
-  ctx.beginPath(); ctx.arc(L*.56,-BH*.28,3.5,0,Math.PI*2); ctx.fillStyle='#0A1820'; ctx.fill();
-  ctx.beginPath(); ctx.arc(L*.55,-BH*.35,1.2,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,.35)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(L*.54,-BH*.4,0.7,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,.55)'; ctx.fill();
-  // mouth + teeth
-  ctx.beginPath(); ctx.moveTo(L*.75,BH*.08); ctx.quadraticCurveTo(L*.96,BH*.55,L*.76,BH*.72);
-  ctx.strokeStyle='rgba(20,40,52,.55)'; ctx.lineWidth=1.5; ctx.stroke();
-  for(let i=0;i<4;i++){const tx=L*.78+i*4.5;
-    ctx.beginPath(); ctx.moveTo(tx,BH*.18); ctx.lineTo(tx+1.8,BH*.03); ctx.lineTo(tx+3.5,BH*.18);
-    ctx.fillStyle='rgba(238,242,244,.85)'; ctx.fill();}
+
+  // pectoral fins (swept back, menacing)
+  ctx.beginPath();
+  ctx.moveTo(-L*.02, BH*.4);
+  ctx.bezierCurveTo(-L*.15, BH*1.2, -L*.55, BH*2.8, -L*.35, BH*3.0);
+  ctx.bezierCurveTo(-L*.1, BH*3.1, L*.18, BH*1.4, L*.22, BH*.85);
+  ctx.fillStyle='#2E4558'; ctx.fill();
+
+  // body — bezier shape, broader snout, tapered tail
+  const bodyGrad = ctx.createLinearGradient(0, -BH, 0, BH);
+  bodyGrad.addColorStop(0, '#3A5468');
+  bodyGrad.addColorStop(0.45, '#4A6678');
+  bodyGrad.addColorStop(1, '#C8DCE4');
+  ctx.beginPath();
+  ctx.moveTo(L*.95, 0);
+  ctx.bezierCurveTo(L*.85, -BH*.6, L*.3, -BH, -L*.4, -BH*.7);
+  ctx.bezierCurveTo(-L*.7, -BH*.5, -L*.88, -BH*.25, -L*.9, 0);
+  ctx.bezierCurveTo(-L*.88, BH*.25, -L*.7, BH*.5, -L*.4, BH*.7);
+  ctx.bezierCurveTo(L*.3, BH, L*.85, BH*.6, L*.95, 0);
+  ctx.fillStyle = bodyGrad; ctx.fill();
+
+  // white belly — countershadowing
+  ctx.beginPath();
+  ctx.moveTo(L*.82, BH*.12);
+  ctx.bezierCurveTo(L*.6, BH*.88, L*.1, BH*.96, -L*.28, BH*.78);
+  ctx.bezierCurveTo(-L*.55, BH*.6, -L*.75, BH*.35, -L*.75, BH*.18);
+  ctx.bezierCurveTo(-L*.6, BH*.55, L*.4, BH*.72, L*.82, BH*.12);
+  ctx.fillStyle = 'rgba(215,235,240,.72)'; ctx.fill();
+
+  // lateral stripe — dark racing stripe along midline
+  ctx.beginPath();
+  ctx.moveTo(L*.8, -BH*.08);
+  ctx.bezierCurveTo(L*.3, -BH*.22, -L*.3, -BH*.18, -L*.75, -BH*.06);
+  ctx.strokeStyle = 'rgba(18,32,44,.45)'; ctx.lineWidth = 2.8; ctx.stroke();
+
+  // specular top highlight
+  const specGrad = ctx.createLinearGradient(0, -BH, 0, -BH*.15);
+  specGrad.addColorStop(0, 'rgba(255,255,255,.18)');
+  specGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.beginPath();
+  ctx.ellipse(-L*.05, -BH*.42, L*.72, BH*.36, 0, 0, Math.PI*2);
+  ctx.fillStyle = specGrad; ctx.fill();
+
+  // gill slits — 5 deep slashes
+  ctx.lineWidth = 1.8; ctx.strokeStyle = 'rgba(14,28,38,.65)';
+  for (let i = 0; i < 5; i++) {
+    const gx = -L*.16 + i*8.5;
+    ctx.beginPath(); ctx.moveTo(gx, -BH*.52); ctx.lineTo(gx+2, BH*.38); ctx.stroke();
+  }
+
+  // primary dorsal fin — rigid, tall, swept back
+  ctx.beginPath();
+  ctx.moveTo(-L*.06, -BH);
+  ctx.bezierCurveTo(L*.04, -BH*2.0, L*.18, -BH*3.4, L*.28, -BH*3.6);
+  ctx.bezierCurveTo(L*.42, -BH*3.4, L*.58, -BH*2.2, L*.58, -BH);
+  ctx.closePath();
+  ctx.fillStyle = '#243544'; ctx.fill();
+  // dorsal fin trailing edge shading
+  ctx.beginPath();
+  ctx.moveTo(L*.28, -BH*3.6);
+  ctx.bezierCurveTo(L*.42, -BH*3.4, L*.58, -BH*2.2, L*.58, -BH);
+  ctx.strokeStyle = 'rgba(10,20,30,.4)'; ctx.lineWidth = 1.2; ctx.stroke();
+
+  // second (smaller) dorsal fin near tail
+  ctx.beginPath();
+  ctx.moveTo(-L*.52, -BH*.85);
+  ctx.bezierCurveTo(-L*.48, -BH*1.5, -L*.4, -BH*1.65, -L*.34, -BH*1.45);
+  ctx.bezierCurveTo(-L*.28, -BH*1.2, -L*.3, -BH*.85, -L*.35, -BH*.85);
+  ctx.closePath();
+  ctx.fillStyle = '#2B3F52'; ctx.fill();
+
+  // anal fin (bottom, near tail)
+  ctx.beginPath();
+  ctx.moveTo(-L*.42, BH*.85);
+  ctx.bezierCurveTo(-L*.48, BH*1.4, -L*.38, BH*1.55, -L*.28, BH*1.3);
+  ctx.bezierCurveTo(-L*.2, BH*1.05, -L*.25, BH*.85, -L*.3, BH*.85);
+  ctx.closePath();
+  ctx.fillStyle = '#2E4558'; ctx.fill();
+
+  // eye — cold black with pale ring
+  ctx.beginPath(); ctx.arc(L*.58, -BH*.24, 5.5, 0, Math.PI*2);
+  ctx.fillStyle = '#050D14'; ctx.fill();
+  ctx.beginPath(); ctx.arc(L*.58, -BH*.24, 5.5, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(100,140,160,.5)'; ctx.lineWidth = 1.2; ctx.stroke();
+  // nictitating membrane crease
+  ctx.beginPath(); ctx.moveTo(L*.535, -BH*.24); ctx.lineTo(L*.625, -BH*.24);
+  ctx.strokeStyle='rgba(20,40,55,.6)'; ctx.lineWidth=0.8; ctx.stroke();
+  // eye shine
+  ctx.beginPath(); ctx.arc(L*.565, -BH*.30, 1.4, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,.42)'; ctx.fill();
+
+  // snout nose pit
+  ctx.beginPath(); ctx.arc(L*.94, BH*.06, 1.8, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(10,22,32,.55)'; ctx.fill();
+
+  // mouth — wide gaping curve
+  ctx.beginPath();
+  ctx.moveTo(L*.72, -BH*.04);
+  ctx.bezierCurveTo(L*.88, BH*.22, L*.9, BH*.62, L*.72, BH*.78);
+  ctx.strokeStyle = 'rgba(8,18,28,.7)'; ctx.lineWidth = 2.2; ctx.stroke();
+
+  // upper teeth — two rows
+  const teethX = [L*.74, L*.785, L*.826, L*.862, L*.892];
+  const teethLen = [BH*.38, BH*.44, BH*.4, BH*.32, BH*.22];
+  ctx.fillStyle = 'rgba(245,248,246,.92)';
+  teethX.forEach((tx, i) => {
+    const ty0 = -BH*.02 + i*BH*.088;
+    const tl = teethLen[i];
+    ctx.beginPath(); ctx.moveTo(tx, ty0); ctx.lineTo(tx+3.5, ty0+tl); ctx.lineTo(tx+7, ty0); ctx.fill();
+  });
+  // lower teeth (smaller, offset)
+  ctx.fillStyle = 'rgba(235,240,238,.78)';
+  teethX.forEach((tx, i) => {
+    const ty0 = BH*.68 - i*BH*.072;
+    const tl = teethLen[i]*.62;
+    ctx.beginPath(); ctx.moveTo(tx+3, ty0); ctx.lineTo(tx+5.5, ty0-tl); ctx.lineTo(tx+8, ty0); ctx.fill();
+  });
+
   ctx.restore();
 }
 
