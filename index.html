@@ -1706,10 +1706,10 @@ function trRenderCenter() {
     _rocketUpdate(gmd, st.currentStreak);
     const RMS = [{d:1,l:'Launch Pad'},{d:2,l:'Engine'},{d:3,l:'Lower Body'},{d:5,l:'Fins'},
                  {d:7,l:'Upper Body'},{d:10,l:'Nose Cone'},{d:12,l:'Window'},{d:15,l:'Mission Patch'},
-                 {d:20,l:'Fueled Up'},{d:25,l:'Liftoff! 🚀'}];
+                 {d:25,l:'Fueled Up'},{d:30,l:'Liftoff! 🚀'}];
     const nextR = RMS.find(m => m.d > gmd);
     const prevR = [...RMS].reverse().find(m => m.d <= gmd);
-    const rIcon = gmd >= 25 ? '🚀' : gmd >= 20 ? '⛽' : gmd >= 15 ? '🏅' : gmd >= 12 ? '🪟' : gmd >= 10 ? '🔭' : gmd >= 7 ? '🛸' : gmd >= 5 ? '🛩️' : gmd >= 3 ? '📦' : gmd >= 2 ? '🔧' : gmd >= 1 ? '🛖' : '🚀';
+    const rIcon = gmd >= 30 ? '🚀' : gmd >= 25 ? '⛽' : gmd >= 15 ? '🏅' : gmd >= 12 ? '🪟' : gmd >= 10 ? '🔭' : gmd >= 7 ? '🛸' : gmd >= 5 ? '🛩️' : gmd >= 3 ? '📦' : gmd >= 2 ? '🔧' : gmd >= 1 ? '🛖' : '🚀';
     document.getElementById('stageLabel').textContent = `${rIcon}  ${escHtml(student.name)}'s Rocket`;
     if (nextR) {
       const prevD = prevR ? prevR.d : 0;
@@ -2375,7 +2375,7 @@ function _aqDraw(t, dt) {
   if (m.hasCoral) AQ_CORAL_POS.forEach(c => _aqCoral(ctx,c.x,FL,c.h,c.c));
 
   // ── Decoration (castle) ─────────────────────────
-  if (m.hasDecor) _aqCastle(ctx, 224, FL);
+  if (m.hasDecor) _aqCastle(ctx, 224, FL, g);
 
   // ── Airstone tube + micro-bubbles (always once sand exists) ──
   if (m.hasSand) _aqAirstone(ctx, W, FL, t);
@@ -2518,18 +2518,34 @@ function _aqCoral(ctx, x, fy, h, color) {
   branch(x,fy,h*.55,2); ctx.restore();
 }
 
-function _aqCastle(ctx, x, fy) {
+function _aqCastle(ctx, x, fy, g) {
+  // scale grows smoothly from day 2 (tiny) up to day 25+ (grand)
+  const sc = Math.min(1.55, 0.42 + (g - 2) * 0.048);
   ctx.save();
+  // scale around the base centre point
+  ctx.translate(x, fy); ctx.scale(sc, sc); ctx.translate(-x, -fy);
   const b=fy-2;
+  // main keep
   ctx.fillStyle='#607080'; ctx.fillRect(x-20,b-34,40,34);
+  // battlements (merlons) along keep top
   ctx.fillStyle='#506070';
   [[x-20,b-41],[x-8,b-41],[x+4,b-41],[x+16,b-41]].forEach(([rx,ry])=>ctx.fillRect(rx,ry,8,10));
+  // gate arch
   ctx.fillStyle='#202C3A'; ctx.beginPath(); ctx.arc(x,b-10,8,Math.PI,0);
   ctx.rect(x-8,b-10,16,10); ctx.fill();
+  // side towers
   ctx.fillStyle='#506070'; ctx.fillRect(x-32,b-28,13,28); ctx.fillRect(x+19,b-28,13,28);
+  // tower battlements
   ctx.fillStyle='#405060';
   [x-32,x+19].forEach(tx=>{ ctx.fillRect(tx,b-36,5,9); ctx.fillRect(tx+8,b-36,5,9); });
+  // moss/algae accent along keep top
   ctx.fillStyle='rgba(40,120,60,.35)'; ctx.fillRect(x-20,b-34,40,5);
+  // flag on keep — appears from day 15 (after scaling so it stays proportional)
+  if (g >= 15) {
+    ctx.fillStyle='#506070'; ctx.fillRect(x-1,b-41-2,2,14); // pole
+    ctx.fillStyle='#CC2233';
+    ctx.beginPath(); ctx.moveTo(x+1,b-41-2); ctx.lineTo(x+11,b-41+4); ctx.lineTo(x+1,b-41+9); ctx.fill();
+  }
   ctx.restore();
 }
 
@@ -2832,7 +2848,7 @@ function _rocketMilestones(g) {
   return {
     hasPad:g>=1, hasEngine:g>=2, hasBody1:g>=3, hasFins:g>=5,
     hasBody2:g>=7, hasCone:g>=10, hasWindow:g>=12, hasDecal:g>=15,
-    hasFuel:g>=20, launched:g>=25,
+    hasFuel:g>=25, launched:g>=30,
   };
 }
 
@@ -3130,7 +3146,7 @@ function _rocketLockedPreviews(ctx,W,gmd){
     {d:1,l:'Launch Pad',i:'🛖'},{d:2,l:'Engine',i:'🔧'},{d:3,l:'Lower Body',i:'📦'},
     {d:5,l:'Fins',i:'✈️'},{d:7,l:'Upper Body',i:'🛸'},{d:10,l:'Nose Cone',i:'🔭'},
     {d:12,l:'Window',i:'🪟'},{d:15,l:'Mission Patch',i:'🏅'},
-    {d:20,l:'Fueled Up',i:'⛽'},{d:25,l:'Liftoff',i:'🚀'},
+    {d:25,l:'Fueled Up',i:'⛽'},{d:30,l:'Liftoff',i:'🚀'},
   ].filter(m=>m.d>gmd).slice(0,3);
   if(!parts.length) return;
   const pw=82,ph=26,gap=6,totalW=parts.length*(pw+gap)-gap;
