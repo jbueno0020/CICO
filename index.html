@@ -2805,28 +2805,38 @@ function _aqShark(ctx, W, H, t) {
   ctx.beginPath(); ctx.arc(L*.94, BH*.06, 1.8, 0, Math.PI*2);
   ctx.fillStyle = 'rgba(10,22,32,.55)'; ctx.fill();
 
-  // mouth — wide gaping curve
+  // mouth — filled dark jaw cavity (triangle: upper corner → snout tip → lower corner)
+  const mUX = L*.72, mUY = -BH*.06;   // upper jaw back corner
+  const mTX = L*.93, mTY =  BH*.02;   // snout tip / jaw meeting point
+  const mLX = L*.72, mLY =  BH*.54;   // lower jaw back corner
   ctx.beginPath();
-  ctx.moveTo(L*.72, -BH*.04);
-  ctx.bezierCurveTo(L*.88, BH*.22, L*.9, BH*.62, L*.72, BH*.78);
-  ctx.strokeStyle = 'rgba(8,18,28,.7)'; ctx.lineWidth = 2.2; ctx.stroke();
+  ctx.moveTo(mUX, mUY); ctx.lineTo(mTX, mTY); ctx.lineTo(mLX, mLY);
+  ctx.closePath();
+  ctx.fillStyle = '#07121A'; ctx.fill();
+  ctx.strokeStyle = 'rgba(4,12,20,.9)'; ctx.lineWidth = 1.8; ctx.stroke();
 
-  // upper teeth — two rows
-  const teethX = [L*.74, L*.785, L*.826, L*.862, L*.892];
-  const teethLen = [BH*.38, BH*.44, BH*.4, BH*.32, BH*.22];
-  ctx.fillStyle = 'rgba(245,248,246,.92)';
-  teethX.forEach((tx, i) => {
-    const ty0 = -BH*.02 + i*BH*.088;
-    const tl = teethLen[i];
-    ctx.beginPath(); ctx.moveTo(tx, ty0); ctx.lineTo(tx+3.5, ty0+tl); ctx.lineTo(tx+7, ty0); ctx.fill();
-  });
-  // lower teeth (smaller, offset)
-  ctx.fillStyle = 'rgba(235,240,238,.78)';
-  teethX.forEach((tx, i) => {
-    const ty0 = BH*.68 - i*BH*.072;
-    const tl = teethLen[i]*.62;
-    ctx.beginPath(); ctx.moveTo(tx+3, ty0); ctx.lineTo(tx+5.5, ty0-tl); ctx.lineTo(tx+8, ty0); ctx.fill();
-  });
+  // upper teeth — spaced along upper jaw edge (mUX,mUY)→(mTX,mTY), pointing DOWN into mouth
+  ctx.fillStyle = 'rgba(245,248,246,.95)';
+  for (let i = 0; i < 5; i++) {
+    const f = i / 4;
+    const tx = mUX + f*(mTX-mUX);
+    const ty = mUY + f*(mTY-mUY);
+    const len = BH*(0.38 - f*0.10);
+    const hw  = len*0.28;
+    ctx.beginPath(); ctx.moveTo(tx-hw,ty); ctx.lineTo(tx,ty+len); ctx.lineTo(tx+hw,ty);
+    ctx.closePath(); ctx.fill();
+  }
+  // lower teeth — spaced along lower jaw edge (mLX,mLY)→(mTX,mTY), pointing UP into mouth
+  ctx.fillStyle = 'rgba(235,240,238,.82)';
+  for (let i = 0; i < 4; i++) {
+    const f = i / 3;
+    const tx = mLX + f*(mTX-mLX);
+    const ty = mLY + f*(mTY-mLY);
+    const len = BH*(0.22 - f*0.05);
+    const hw  = len*0.28;
+    ctx.beginPath(); ctx.moveTo(tx-hw,ty); ctx.lineTo(tx,ty-len); ctx.lineTo(tx+hw,ty);
+    ctx.closePath(); ctx.fill();
+  }
 
   ctx.restore();
 }
