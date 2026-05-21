@@ -6,20 +6,35 @@
 <title>CICO Tools</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-/* ── Reset & Variables ──────────────────────────── */
+/* ── Reset & Design Tokens ──────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --blue:   #3A86FF;  --yellow: #FFBE0B;
-  --mint:   #06D6A0;  --coral:  #FF6B6B;
-  --bg:     #F0F2F8;  --white:  #FFFFFF;
-  --border: #D1D5DB;  --text:   #1E293B;
-  --muted:  #64748B;
-  --shadow: 0 2px 16px rgba(58,134,255,.09);
-  --r: 12px;
+  --bg: #FAF9F6;
+  --surface: #FFFFFF;
+  --surface-2: #F5F3EE;
+  --ink: #161A26;
+  --ink-2: #3D4256;
+  --muted: #7B8194;
+  --border: #E5E1D6;
+  --border-strong: #D6D1C2;
+  --primary: #3D6DFF;
+  --primary-soft: #EBF0FF;
+  --success: #27795A;
+  --success-soft: #E0EFE7;
+  --amber: #B98019;
+  --amber-soft: #F5EAD0;
+  --cream: #E8E4D9;
+  --coral: #C75644;
+  --font-ui: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-display: "Fraunces", "Plus Jakarta Sans", serif;
+  /* legacy aliases so old JS still works */
+  --blue: #3D6DFF; --mint: #27795A; --text: #161A26;
 }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; font-family: var(--font-ui); background: var(--bg); color: var(--ink); }
 body {
   font-family: 'Nunito', sans-serif;
   background: var(--bg);
